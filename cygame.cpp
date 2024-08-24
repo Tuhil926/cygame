@@ -1,6 +1,8 @@
 #include "cygame.h"
+#include "headers/SDL_stdinc.h"
 
 #include <iostream>
+#include <ostream>
 #include <vector>
 // initialises SDL2 and SDL2_TTF
 int cygame_init() {
@@ -12,7 +14,7 @@ int cygame_init() {
     std::cout << "Welcome to the cygame community (estimated size: 1 person)\n";
     return 0;
 }
-SDL_Window* global_window;
+SDL_Window *global_window;
 float global_width, global_height;
 
 /// @brief returns an SDL_Renderer in a window onto which all your subsequent
@@ -24,8 +26,8 @@ float global_width, global_height;
 /// by 1.5
 /// @return
 CYScreen make_screen(int width, int height, float gui_scale,
-                     const char* title) {
-    SDL_Window* win = SDL_CreateWindow(
+                     const char *title) {
+    SDL_Window *win = SDL_CreateWindow(
         title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         (int)((float)width / gui_scale), (int)((float)height / gui_scale),
         SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
@@ -36,7 +38,7 @@ CYScreen make_screen(int width, int height, float gui_scale,
     Uint32 render_flags = SDL_RENDERER_ACCELERATED;
 
     // creates a renderer to render our images
-    SDL_Renderer* rend = SDL_CreateRenderer(win, -1, render_flags);
+    SDL_Renderer *rend = SDL_CreateRenderer(win, -1, render_flags);
     SDL_RenderSetLogicalSize(rend, width, height);
     global_width = width;
     global_height = height;
@@ -61,7 +63,8 @@ void fill_rect(SDL_Rect rect, CYScreen screen, Color color) {
 // from pos1 to pos2 and has twice the width.
 void draw_line(CYScreen screen, Pos2D pos1, Pos2D pos2, Color color,
                int width) {
-    if (!width) return;
+    if (!width)
+        return;
     SDL_SetRenderDrawColor(screen, color.r, color.g, color.b, color.a);
     if (width == 1) {
         SDL_RenderDrawLineF(screen, pos1.x, pos1.y, pos2.x, pos2.y);
@@ -202,10 +205,10 @@ bool collide_rects(SDL_Rect rect1, SDL_Rect rect2) {
 }
 
 // draws text centered around pos_center
-int draw_centered_text(CYScreen screen, TTF_Font* font, std::string text,
+int draw_centered_text(CYScreen screen, TTF_Font *font, std::string text,
                        Pos2D pos_center, Color color) {
-    SDL_Surface* text_surface = TTF_RenderText_Solid(font, text.c_str(), color);
-    SDL_Texture* text_texture =
+    SDL_Surface *text_surface = TTF_RenderText_Solid(font, text.c_str(), color);
+    SDL_Texture *text_texture =
         SDL_CreateTextureFromSurface(screen, text_surface);
     SDL_Rect pos_rect = {(int)(pos_center.x - text_surface->w / 2),
                          (int)(pos_center.y - text_surface->h / 2),
@@ -227,8 +230,8 @@ void draw_aa_circle(CYScreen screen, Pos2D pos, int radius, Color color) {
 }
 
 Button::Button(SDL_Rect rect, std::string text, int font_size, Color color,
-               Color hover_color, Color click_color, void (*on_click)(void*),
-               void* arg, Color text_color) {
+               Color hover_color, Color click_color, void (*on_click)(void *),
+               void *arg, Color text_color) {
     this->text = text;
     this->pos = {(float)rect.x, (float)rect.y};
     width = rect.w;
@@ -250,13 +253,17 @@ void Button::draw(CYScreen screen) {
         draw_centered_text(screen, font, text,
                            pos + Pos2D{width / 2, height / 2}, text_color);
 }
-
+Button::Button() {}
 void Button::update(MouseState mouse_state) {
     rect = {(int)pos.x, (int)pos.y, (int)width, (int)height};
     if (collide_rect(rect, {(float)mouse_state.x, (float)mouse_state.y})) {
         if (mouse_state.pressed_left()) {
             if (!clicked && is_colliding) {
-                on_click(arg);
+                std::cout << "ff\n";
+                if (on_click) {
+                    std::cout << "nice but wtf\n";
+                    on_click(arg);
+                }
                 color = click_color;
             } else
                 color = click_color;
@@ -303,10 +310,10 @@ void InputBox::draw(CYScreen screen) {
         text_width = draw_centered_text(
             screen, font, text, pos + Pos2D{width / 2, height / 2}, text_color);
     if (is_cursor_visible)
-        fill_rect(
-            {rect.x + rect.w / 2 + text_width / 2 + 2,
-             rect.y + rect.h / 2 - (font_size * 2) / 3, 4, (font_size * 4) / 3},
-            screen, text_color);
+        fill_rect({rect.x + rect.w / 2 + text_width / 2 + 2,
+                   rect.y + rect.h / 2 - (font_size * 2) / 3, 4,
+                   (font_size * 4) / 3},
+                  screen, text_color);
 }
 // as long as you have called the handle_event macro previously, you should
 // just be able to pass _events without defining it. Otherwise, figure it
@@ -342,28 +349,29 @@ void InputBox::update(MouseState mouse_state, std::vector<SDL_Event> _events,
     if (is_in_focus) {
         for (auto event : _events) {
             switch (event.type) {
-                case SDL_TEXTINPUT:
-                    // std::cout << event.text.text << std::endl;
-                    if (text.size() < max_len)
-                        text.push_back(event.text.text[0]);
-                    break;
-                case KEYDOWN:
-                    switch (event.key.keysym.scancode) {
-                        case SDL_SCANCODE_BACKSPACE:
-                            if (text.size() > 0) text.pop_back();
-                            if (keys[SDL_SCANCODE_LCTRL]) {
-                                while (text.size() && text.back() != ' ') {
-                                    text.pop_back();
-                                }
-                            }
-                            break;
-                        case SDL_SCANCODE_RETURN:
-                        case SDL_SCANCODE_ESCAPE:
-                            is_in_focus = false;
+            case SDL_TEXTINPUT:
+                // std::cout << event.text.text << std::endl;
+                if (text.size() < max_len)
+                    text.push_back(event.text.text[0]);
+                break;
+            case KEYDOWN:
+                switch (event.key.keysym.scancode) {
+                case SDL_SCANCODE_BACKSPACE:
+                    if (text.size() > 0)
+                        text.pop_back();
+                    if (keys[SDL_SCANCODE_LCTRL]) {
+                        while (text.size() && text.back() != ' ') {
+                            text.pop_back();
+                        }
                     }
                     break;
-                default:
-                    break;
+                case SDL_SCANCODE_RETURN:
+                case SDL_SCANCODE_ESCAPE:
+                    is_in_focus = false;
+                }
+                break;
+            default:
+                break;
             }
         }
     }
@@ -399,8 +407,10 @@ void Slider::update(MouseState mouse_state) {
             else
                 value =
                     max_value * (mouse_state.y - start.y) / (end.y - start.y);
-            if (value > max_value) value = max_value;
-            if (value < 0) value = 0;
+            if (value > max_value)
+                value = max_value;
+            if (value < 0)
+                value = 0;
         }
     } else
         is_selected = false;
@@ -450,4 +460,75 @@ void StaticText::re_render() {
 }
 void StaticText::draw() {
     SDL_RenderCopy(screen, text_texture, NULL, &pos_rect);
+}
+
+void _select(void *arg) {
+    selector_args *s = (selector_args *)arg;
+    s->selector->selected = s->selected;
+    s->selector->is_dropped_down = false;
+}
+
+Selector::Selector(SDL_Rect rect, int font_size,
+                   std::vector<std::string> options, Color color,
+                   Color hover_color, Color click_color) {
+    this->rect = rect;
+    this->font = TTF_OpenFont(DEFAULT_FONT, font_size);
+    this->options = options;
+    this->default_color = color;
+    this->color = color;
+    this->hover_color = hover_color;
+    this->click_color = click_color;
+    args = std::vector<selector_args>(options.size());
+    original_button = Button(rect, "defalult!", font_size, color, hover_color,
+                             click_color, NULL);
+    for (int i = 0; i < options.size(); i++) {
+        args[i] = {this, i};
+        Button new_button =
+            Button({rect.x, rect.y + (i + 1) * rect.h, rect.w, rect.h},
+                   options[i], font_size, color, hover_color, click_color,
+                   _select, (void *)(&args[i]));
+        buttons.push_back(new_button);
+    }
+    this->is_dropped_down = false;
+    this->selected = 0;
+}
+void Selector::draw(CYScreen screen) {
+    original_button.draw(screen);
+    Pos2D arrow_center = {rect.x + rect.w - (float)rect.h / 3,
+                          rect.y + (float)rect.h / 2};
+    if (is_dropped_down) {
+        for (int i = 0; i < options.size(); i++) {
+            buttons[i].draw(screen);
+        }
+        draw_polygon(screen,
+                     {arrow_center + Pos2D{0., -4.},
+                      arrow_center + Pos2D{6., 4.},
+                      arrow_center + Pos2D{-6., 4.}},
+                     {50, 50, 50, 255});
+    } else {
+        draw_polygon(screen,
+                     {arrow_center + Pos2D{0., 4.},
+                      arrow_center + Pos2D{6., -4.},
+                      arrow_center + Pos2D{-6., -4.}},
+                     {50, 50, 50, 255});
+    }
+}
+
+void Selector::update(MouseState mouse_state) {
+    original_button.update(mouse_state);
+    if (mouse_state.pressed_left() &&
+        !collide_rect(
+            {rect.x, rect.y, rect.w, (int)(options.size() + 1) * rect.h},
+            {(float)mouse_state.x, (float)mouse_state.y})) {
+        is_dropped_down = false;
+    }
+    if (original_button.clicked && original_button.is_colliding)
+        is_dropped_down = true;
+
+    if (is_dropped_down) {
+        for (int i = 0; i < options.size(); i++) {
+            buttons[i].update(mouse_state);
+        }
+    }
+    original_button.text = options[selected];
 }

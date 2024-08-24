@@ -3,9 +3,9 @@
 // this is just a demo to show how to use cygame.
 
 // this is the callback function that the button calls.
-void hello(void* rd) {
+void hello(void *rd) {
     printf("Hello!\n");
-    unsigned char* r = (unsigned char*)rd;
+    unsigned char *r = (unsigned char *)rd;
     *r = *r + 100;
 }
 
@@ -37,27 +37,31 @@ int main() {
     StaticText text2 =
         StaticText({500, 50}, "Sum", 32, {100, 100, 255, 255}, screen);
 
+    Selector selector = Selector({0, 0, 200, 100}, 24, {"opt1", "opt2", "opt3"},
+                                 {100, 100, 100, 255}, {120, 120, 120, 255},
+                                 {130, 130, 130, 255});
+
     while (running) {
         // you need to use this handle_event macro if you want to be able to use
         // the input box. don't ask me why. It's just convenient and easier than
         // calling the sdl functions. Oh also, it's a switch statement, so you
         // need to hadle the cases.
         handle_events {
-            // you can also use any of the sdl2 specific cases if you need to.
-            case QUIT:
-                running = false;
-                break;
+        // you can also use any of the sdl2 specific cases if you need to.
+        case QUIT:
+            running = false;
+            break;
 
-            case KEYDOWN:
-                // this is also a useful macro, and it must be used along with
-                // handle_events, because they use the _event variable. This is
-                // a switch statement on the keycode
-                handle_keycode {
-                    case K_w:
-                        printf("You pressed w!\n");
-                    default:
-                        break;
-                }
+        case KEYDOWN:
+            // this is also a useful macro, and it must be used along with
+            // handle_events, because they use the _event variable. This is
+            // a switch statement on the keycode
+            handle_keycode {
+            case K_w:
+                printf("You pressed w!\n");
+            default:
+                break;
+            }
         }
 
         // gets a list of keys that are currently held down (Keys is Uint8 *).
@@ -71,10 +75,14 @@ int main() {
         MouseState mouse_state = get_mouse_state();
 
         // just some demo stuff, it moves the square around
-        if (keys[K_w]) y -= 5;
-        if (keys[K_a]) x -= 5;
-        if (keys[K_s]) y += 5;
-        if (keys[K_d]) x += 5;
+        if (keys[K_w])
+            y -= 5;
+        if (keys[K_a])
+            x -= 5;
+        if (keys[K_s])
+            y += 5;
+        if (keys[K_d])
+            x += 5;
 
         // this is important. Every object that you create has an update
         // function that you need to call every frame. if you don't call it, it
@@ -83,6 +91,7 @@ int main() {
         input.update(mouse_state, _events, keys);
         slider.update(mouse_state);
         slider2.update(mouse_state);
+        selector.update(mouse_state);
         text2.set_text("Sum: " +
                        std::to_string((int)(slider.value + slider2.value)));
 
@@ -114,6 +123,7 @@ int main() {
         slider2.draw(screen);
         text.draw();
         text2.draw();
+        selector.draw(screen);
 
         // finally, you need to call draw_screen to show the stuff onto the
         // screen.

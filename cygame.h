@@ -6,16 +6,17 @@
 #include "headers/SDL.h"
 #include "headers/SDL2_gfxPrimitives.h"
 #include "headers/SDL_image.h"
+#include "headers/SDL_rect.h"
 #include "headers/SDL_timer.h"
 #include "headers/SDL_ttf.h"
 #define QUIT SDL_QUIT
 #define KEYDOWN SDL_KEYDOWN
 #define KEYUP SDL_KEYUP
 #define KEYMAPCHANGED SDL_KEYMAPCHANGED
-#define handle_events                                         \
-    SDL_Event _event;                                         \
-    std::vector<SDL_Event> _events;                           \
-    for (; SDL_PollEvent(&_event); _events.push_back(_event)) \
+#define handle_events                                                          \
+    SDL_Event _event;                                                          \
+    std::vector<SDL_Event> _events;                                            \
+    for (; SDL_PollEvent(&_event); _events.push_back(_event))                  \
         switch (_event.type)
 #define handle_keycode switch (_event.key.keysym.scancode)
 #define DEFAULT_FONT "fonts/PixelOperator8.ttf"
@@ -67,8 +68,8 @@
 #define Mouse_middle SDL_BUTTON_MMASK
 // add more cases when necessary please, I'm not doing the rest
 
-typedef SDL_Renderer* CYScreen;
-typedef const Uint8* Keys;
+typedef SDL_Renderer *CYScreen;
+typedef const Uint8 *Keys;
 
 struct Color {
     Uint8 r;
@@ -82,11 +83,11 @@ struct Color {
 struct Pos2D {
     float x;
     float y;
-    Pos2D operator+(const Pos2D& other) { return {other.x + x, other.y + y}; }
-    Pos2D operator-(const Pos2D& other) { return {x - other.x, y - other.y}; }
+    Pos2D operator+(const Pos2D &other) { return {other.x + x, other.y + y}; }
+    Pos2D operator-(const Pos2D &other) { return {x - other.x, y - other.y}; }
     Pos2D operator/(const float num) { return {x / num, y / num}; }
     Pos2D operator*(const float num) { return {x * num, y * num}; }
-    Pos2D operator*(const Pos2D& other) { return {x * other.x, y * other.y}; }
+    Pos2D operator*(const Pos2D &other) { return {x * other.x, y * other.y}; }
     float norm() { return sqrt(x * x + y * y); }
 } typedef Pos2D;
 
@@ -103,7 +104,7 @@ struct MouseState {
 int cygame_init();
 
 CYScreen make_screen(int width, int height, float gui_scale = 1,
-                     const char* title = "Game");
+                     const char *title = "Game");
 
 void draw_rect(SDL_Rect rect, CYScreen screen, Color color);
 
@@ -130,14 +131,14 @@ bool collide_rect(SDL_Rect rect, Pos2D point);
 
 bool collide_rects(SDL_Rect rect1, SDL_Rect rect2);
 
-int draw_centered_text(CYScreen screen, TTF_Font* font, std::string text,
+int draw_centered_text(CYScreen screen, TTF_Font *font, std::string text,
                        Pos2D pos_center, Color color);
 
 void draw_aa_circle(CYScreen screen, Pos2D pos, int radius, Color color);
 
 // a button which takes a callback functions with a void* argument
 class Button {
-   public:
+  public:
     Pos2D pos;
     float width;
     float height;
@@ -149,20 +150,21 @@ class Button {
     bool is_colliding;
     bool clicked;
     SDL_Rect rect;
-    void (*on_click)(void*);
-    TTF_Font* font;
+    void (*on_click)(void *);
+    TTF_Font *font;
     Color text_color;
-    void* arg;
+    void *arg;
+    Button();
     Button(SDL_Rect rect, std::string text, int font_size, Color color,
-           Color hover_color, Color click_color, void (*on_click)(void*),
-           void* arg = NULL, Color text_color = {0, 0, 0, 0});
+           Color hover_color, Color click_color, void (*on_click)(void *),
+           void *arg = NULL, Color text_color = {0, 0, 0, 0});
     void draw(CYScreen screen);
 
     void update(MouseState mouse_state);
 };
 
 class InputBox {
-   public:
+  public:
     Pos2D pos;
     float width;
     float height;
@@ -175,7 +177,7 @@ class InputBox {
     bool clicked;
     SDL_Rect rect;
     // void (*on_click)(void*);
-    TTF_Font* font;
+    TTF_Font *font;
     Color text_color;
     bool is_in_focus;
     int max_len;
@@ -198,7 +200,7 @@ class InputBox {
 };
 
 class Slider {
-   public:
+  public:
     Pos2D start;
     Pos2D end;
     float max_value;
@@ -220,15 +222,15 @@ class Slider {
 // it's the same performance as using my draw_centered_text function, but more
 // convenient.)
 class StaticText {
-   public:
+  public:
     Pos2D pos;
     std::string text;
     Color color;
-    TTF_Font* font;
+    TTF_Font *font;
     int font_size;
     Color text_color;
-    SDL_Surface* text_surface;
-    SDL_Texture* text_texture;
+    SDL_Surface *text_surface;
+    SDL_Texture *text_texture;
     CYScreen screen;
     SDL_Rect pos_rect;
     StaticText(Pos2D pos, std::string text, int font_size, Color text_color,
@@ -242,6 +244,33 @@ class StaticText {
     // color or position
     void re_render();
     void draw();
+};
+class Selector;
+struct selector_args {
+    Selector *selector;
+    int selected;
+} typedef selector_args;
+
+void _select(void *arg);
+class Selector {
+  public:
+    SDL_Rect rect;
+    Color color;
+    Color default_color;
+
+    Color hover_color;
+    Color click_color;
+    TTF_Font *font;
+    std::vector<std::string> options;
+    int selected;
+    std::vector<Button> buttons;
+    std::vector<selector_args> args;
+    Button original_button;
+    bool is_dropped_down;
+    Selector(SDL_Rect rect, int font_size, std::vector<std::string> options,
+             Color color, Color hover_color, Color click_color);
+    void draw(CYScreen screen);
+    void update(MouseState mouse_state);
 };
 
 #endif
