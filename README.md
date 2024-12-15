@@ -8,13 +8,15 @@
 # Setup
 
 - I tried my best to find apt packages for these libraries, but only sdl2 and sdl2_image seem to have them. So, you'll have to install sdl2_gfx and sdl2_ttf by compiling th source code.
-- `sudo apt-get install libsdl2-2.0-0 libsdl2-dev libsdl2-image-2.0-0 libsdl2-image-dev`
+<!-- - `sudo apt-get install libsdl2-2.0-0 libsdl2-dev libsdl2-image-2.0-0 libsdl2-image-dev` -->
+- Try this first to see if it works: `sudo apt install libsdl2-dev libsdl2-image-dev libsdl2-ttf-dev libsdl2-gfx-dev`
+- If that works, you don't need to do the rest of these.
 - download sdl2_gfx from sourceforge(https://sourceforge.net/projects/sdl2gfx/), extract it and cd to the library and run:
   `./autogen.sh`
   `./configure`
   `make`
   `sudo make install`
-- and for vscode you might need to add /usr/local/SDL2 to your include path. or just use the headers I provided in the cygame directory.
+- and for vscode you might need to add /usr/local/SDL2 to your include path.
 - download sdl2_ttf from the github page(https://github.com/libsdl-org/SDL_ttf/releases/download/release-2.22.0/SDL2_ttf-2.22.0.tar.gz), extract it and cd to it and run these:
   `./configure`
   `make`
@@ -23,4 +25,5 @@
 
 # To run:
 
-- g++ main.cpp cygame.cpp -lSDL2 -lSDL2_image -lSDL2_gfx -lSDL2_ttf
+- Run `make` in this directory
+- Then you can run the demo with `./a.out`
