@@ -3,12 +3,14 @@
 #include <iostream>
 #include <vector>
 
-#include "headers/SDL.h"
-#include "headers/SDL2_gfxPrimitives.h"
-#include "headers/SDL_image.h"
-#include "headers/SDL_rect.h"
-#include "headers/SDL_timer.h"
-#include "headers/SDL_ttf.h"
+#include <SDL.h>
+#include <SDL2_gfxPrimitives.h>
+#include <SDL_image.h>
+#include <SDL_rect.h>
+#include <SDL_stdinc.h>
+#include <SDL_timer.h>
+#include <SDL_ttf.h>
+
 #define QUIT SDL_QUIT
 #define KEYDOWN SDL_KEYDOWN
 #define KEYUP SDL_KEYUP
@@ -61,7 +63,7 @@
 #define K_up SDL_SCANCODE_UP
 #define K_down SDL_SCANCODE_DOWN
 #define K_left SDL_SCANCODE_LEFT
-#define K_ring SDL_SCANCODE_RIGHT
+#define K_right SDL_SCANCODE_RIGHT
 
 #define Mouse_left SDL_BUTTON_LMASK
 #define Mouse_right SDL_BUTTON_RMASK

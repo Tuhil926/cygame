@@ -1,5 +1,4 @@
 #include "cygame.h"
-#include "headers/SDL_stdinc.h"
 
 #include <iostream>
 #include <ostream>
@@ -259,9 +258,9 @@ void Button::update(MouseState mouse_state) {
     if (collide_rect(rect, {(float)mouse_state.x, (float)mouse_state.y})) {
         if (mouse_state.pressed_left()) {
             if (!clicked && is_colliding) {
-                std::cout << "ff\n";
+                // std::cout << "ff\n";
                 if (on_click) {
-                    std::cout << "nice but wtf\n";
+                    // std::cout << "nice but wtf\n";
                     on_click(arg);
                 }
                 color = click_color;
@@ -368,6 +367,8 @@ void InputBox::update(MouseState mouse_state, std::vector<SDL_Event> _events,
                 case SDL_SCANCODE_RETURN:
                 case SDL_SCANCODE_ESCAPE:
                     is_in_focus = false;
+                default:
+                    break;
                 }
                 break;
             default:
