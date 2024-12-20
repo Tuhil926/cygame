@@ -344,18 +344,71 @@ Shape *ShapeGenerator::get_triangle2() {
 
 Shape *ShapeGenerator::get_cube() {
     Shape *ret = new Shape();
-    ret->vertex_count = 3;
+    ret->vertex_count = 24;
+    ret->index_count = 36;
     ret->num_floats_per_vertex = 6;
     GLfloat verts[] = {
-        -1.0f, 1.0f,  0.0f,  // vertex1
-        1.0f,  0.0f,  0.0f,  // color1
-        1.0f,  1.0f,  0.0f,  // vertex2
-        0.0f,  1.0f,  0.0f,  // color2
-        0.0f,  -1.0f, -1.0f, // vertex3
-        0.0f,  0.0f,  1.0f   // color3
+        1.0,      1.0,  1.0,  // top face
+        /**/ 1.0, 1.0,  0.0,  //
+        -1.0,     1.0,  1.0,  //
+        /**/ 1.0, 0.0,  1.0,  //
+        -1.0,     -1.0, 1.0,  //
+        /**/ 0.0, 0.0,  1.0,  //
+        1.0,      -1.0, 1.0,  //
+        /**/ 1.0, 0.0,  0.0,  //
+        1.0,      1.0,  -1.0, // bottom face
+        /**/ 0.0, 1.0,  1.0,  //
+        -1.0,     1.0,  -1.0, //
+        /**/ 0.0, 1.0,  0.0,  //
+        -1.0,     -1.0, -1.0, //
+        /**/ 0.0, 1.0,  0.5,  //
+        1.0,      -1.0, -1.0, //
+        /**/ 0.5, 1.0,  0.5,  //
+        1.0,      1.0,  1.0,  // right face
+        /**/ 1.0, 0.0,  0.5,  //
+        1.0,      -1.0, 1.0,  //
+        /**/ 1.0, 0.0,  1.0,  //
+        1.0,      -1.0, -1.0, //
+        /**/ 0.0, 0.0,  1.0,  //
+        1.0,      1.0,  -1.0, //
+        /**/ 0.0, 0.5,  1.0,  //
+        -1.0,     1.0,  1.0,  // left face
+        /**/ 1.0, 0.5,  1.0,  //
+        -1.0,     -1.0, 1.0,  //
+        /**/ 1.0, 0.5,  0.5,  //
+        -1.0,     -1.0, -1.0, //
+        /**/ 0.5, 0.5,  0.5,  //
+        -1.0,     1.0,  -1.0, //
+        /**/ 0.5, 1.0,  0.5,  //
+        1.0,      1.0,  1.0,  // front face
+        /**/ 0.5, 1.0,  1.0,  //
+        -1.0,     1.0,  1.0,  //
+        /**/ 0.0, 0.0,  1.0,  //
+        -1.0,     1.0,  -1.0, //
+        /**/ 0.0, 1.0,  0.0,  //
+        1.0,      1.0,  -1.0, //
+        /**/ 1.0, 1.0,  0.0,  //
+        1.0,      -1.0, 1.0,  // back face
+        /**/ 1.0, 0.0,  0.0,  //
+        -1.0,     -1.0, 1.0,  //
+        /**/ 1.0, 0.0,  1.0,  //
+        -1.0,     -1.0, -1.0, //
+        /**/ 1.0, 1.0,  0.0,  //
+        1.0,      -1.0, -1.0, //
+        /**/ 0.0, 1.0,  0.0,  //
+    };
+    GLushort inds[] = {
+        0,  1,  2,  2,  3,  0,  //
+        4,  6,  5,  6,  4,  7,  //
+        8,  9,  10, 10, 11, 8,  //
+        12, 14, 13, 14, 12, 15, //
+        16, 17, 18, 18, 19, 16, //
+        20, 22, 21, 22, 20, 23  //
     };
     ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
+    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
     memcpy(ret->vertices, verts, ret->get_size_bytes());
+    memcpy(ret->indices, inds, ret->get_indices_size_bytes());
     return ret;
 }
 
@@ -412,9 +465,9 @@ void ShapeRenderer::send_shapes() {
         tot_num_indices += shape->index_count;
         tot_num_vertices += shape->vertex_count;
     }
-    for (int i = 0; i < 6; i++) {
-        std::cout << combined_shape->indices[i] << std::endl;
-    }
+    // for (int i = 0; i < 6; i++) {
+    //     std::cout << combined_shape->indices[i] << std::endl;
+    // }
 
     // generate array buffer and send vertex data
     glGenBuffers(1, &myBufferID);

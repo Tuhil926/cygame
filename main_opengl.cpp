@@ -1,7 +1,12 @@
 #include "cygame.h"
 #include "glad/glad.h"
-#include "glm/ext/vector_float4.hpp"
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/ext/matrix_transform.hpp"
+#include "glm/ext/vector_float3.hpp"
+#include "glm/gtc/constants.hpp"
 #include <fstream>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/mat4x4.hpp>
 #include <iostream>
 
 using namespace std;
@@ -19,10 +24,12 @@ int main() {
 
     Shape *triangle = ShapeGenerator::get_triangle();
     Shape *triangle2 = ShapeGenerator::get_triangle2();
+    Shape *cube = ShapeGenerator::get_cube();
 
     ShapeRenderer renderer;
     auto tri_gpu = renderer.add_shape(triangle);
     auto tri_gpu2 = renderer.add_shape(triangle2);
+    auto cube_gpu = renderer.add_shape(cube);
 
     // creating the shader program
 
@@ -39,8 +46,6 @@ int main() {
     string fragmentShaderSrc((istreambuf_iterator<char>(fragmentShaderFile)),
                              istreambuf_iterator<char>());
 
-    GLuint programObject = glCreateProgram();
-
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     const char *vertex_src = vertexShaderSrc.c_str();
     glShaderSource(vertexShader, 1, &vertex_src, 0);
@@ -51,6 +56,32 @@ int main() {
     glShaderSource(fragmentShader, 1, &fragment_src, 0);
     glCompileShader(fragmentShader);
 
+    GLint compileStatus;
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &compileStatus);
+    if (compileStatus != GL_TRUE) {
+        GLint infoLength;
+        glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &infoLength);
+        GLchar *buffer = new GLchar[infoLength];
+
+        GLsizei bufferSize;
+        glGetShaderInfoLog(vertexShader, infoLength, &bufferSize, buffer);
+        cout << buffer << endl;
+        delete[] buffer;
+    }
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compileStatus);
+    if (compileStatus != GL_TRUE) {
+        GLint infoLength;
+        glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &infoLength);
+        GLchar *buffer = new GLchar[infoLength];
+
+        GLsizei bufferSize;
+        glGetShaderInfoLog(fragmentShader, infoLength, &bufferSize, buffer);
+        cout << buffer << endl;
+        delete[] buffer;
+    }
+
+    GLuint programObject = glCreateProgram();
+
     glAttachShader(programObject, vertexShader);
     glAttachShader(programObject, fragmentShader);
     glLinkProgram(programObject);
@@ -59,6 +90,8 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     glUseProgram(programObject);
+
+    vec3 camera_position(0.0f, 0.0f, 0.0f);
 
     // glBindVertexArray(renderer.vertexArrayObject);
     // glBindBuffer(GL_ARRAY_BUFFER, renderer.myBufferID);
@@ -79,8 +112,8 @@ int main() {
             // handle_events, because they use the _event variable. This is
             // a switch statement on the keycode
             handle_keycode {
-            case K_w:
-                printf("You pressed w!\n");
+            // case K_w:
+            //     printf("You pressed w!\n");
             default:
                 break;
             }
@@ -92,15 +125,61 @@ int main() {
 
         Keys keys = get_keys_pressed();
 
+        if (keys[K_w]) {
+            camera_position.z -= 0.01;
+        }
+        if (keys[K_s]) {
+            camera_position.z += 0.01;
+        }
+        if (keys[K_a]) {
+            camera_position.x -= 0.01;
+        }
+        if (keys[K_d]) {
+            camera_position.x += 0.01;
+        }
+        if (keys[K_shift]) {
+            camera_position.y -= 0.01;
+        }
+        if (keys[K_space]) {
+            camera_position.y += 0.01;
+        }
+
         // this is a similar thing for the mouse input.
 
         MouseState mouse_state = get_mouse_state();
 
+        mat4 model_transform_matrix =
+            glm::translate(mat4(1), vec3(0, 0, -4)) *
+            glm::rotate(mat4(1), quarter_pi<float>(), vec3(1.0, 1.0, 0.0));
+        mat4 world_to_view_matrix = lookAt(
+            camera_position, camera_position + vec3(0, 0, -1), vec3(0, 1, 0));
+        mat4 projection_matrix =
+            glm::perspective(pi<float>() / 3, 1000.0f / 700.0f, 0.1f, 10.0f);
+
+        mat4 full_transform_matrix =
+            projection_matrix * world_to_view_matrix * model_transform_matrix;
+
+        // for (int i = 0; i < 4; i++) {
+        //     for (int j = 0; j < 4; j++) {
+        //         cout << full_transform_matrix[i][j] << " ";
+        //     }
+        //     cout << endl;
+        // }
+        // cout << endl;
+        // cout << endl;
+
+        GLint full_transform_matrix_location =
+            glGetUniformLocation(programObject, "fullTransformMatrix");
+        // cout << full_transform_matrix_location << endl;
+        glUniformMatrix4fv(full_transform_matrix_location, 1, GL_FALSE,
+                           &full_transform_matrix[0][0]);
+
         // opengl stuff
         clear_opengl_screen({0, 0, 0, 0});
 
-        renderer.render_shape(tri_gpu);
-        renderer.render_shape(tri_gpu2);
+        // renderer.render_shape(tri_gpu);
+        // renderer.render_shape(tri_gpu2);
+        renderer.render_shape(cube_gpu);
 
         // just swaps the buffers
         draw_opengl_screen();

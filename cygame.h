@@ -1,5 +1,6 @@
 #ifndef CYGAME_H
 #define CYGAME_H
+#include "SDL_scancode.h"
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -54,6 +55,7 @@
 #define K_y SDL_SCANCODE_Y
 #define K_z SDL_SCANCODE_Z
 #define K_space SDL_SCANCODE_SPACE
+#define K_shift SDL_SCANCODE_LSHIFT
 #define K_0 SDL_SCANCODE_0
 #define K_1 SDL_SCANCODE_1
 #define K_2 SDL_SCANCODE_2
@@ -73,6 +75,7 @@
 #define Mouse_right SDL_BUTTON_RMASK
 #define Mouse_middle SDL_BUTTON_MMASK
 // add more cases when necessary please, I'm not doing the rest
+
 
 typedef SDL_Renderer *CYScreen;
 typedef SDL_GLContext CYGLScreen;
