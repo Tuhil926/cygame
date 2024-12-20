@@ -1,5 +1,9 @@
 #include "cygame.h"
-
+#include "SDL_video.h"
+#include "glad/glad.h"
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <ostream>
 #include <vector>
@@ -41,6 +45,42 @@ CYScreen make_screen(int width, int height, float gui_scale,
     SDL_RenderSetLogicalSize(rend, width, height);
     global_width = width;
     global_height = height;
+    return rend;
+}
+
+CYGLScreen make_opengl_screen(int width, int height, float gui_scale,
+                              const char *title) {
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
+                        SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    SDL_Window *win = SDL_CreateWindow(
+        title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        (int)((float)width / gui_scale), (int)((float)height / gui_scale),
+        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
+    global_window = win;
+
+    // triggers the program that controls
+    // your graphics hardware and sets flags
+    Uint32 render_flags = SDL_RENDERER_ACCELERATED;
+
+    // creates a renderer to render our images
+    global_width = width;
+    global_height = height;
+    CYGLScreen rend = SDL_GL_CreateContext(win);
+
+    int err = gladLoadGLLoader(SDL_GL_GetProcAddress);
+    if (!err) {
+        printf("error initializing glad: %d\n", err);
+        exit(1);
+    }
+
+    glViewport(0, 0, width, height);
+
+    std::cout << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+
     return rend;
 }
 
@@ -146,6 +186,16 @@ void clear_screen(CYScreen screen) {
     SDL_RenderClear(screen);
 }
 
+void clear_opengl_screen(Color color) {
+    int w, h;
+    SDL_GetWindowSize(global_window, &w, &h);
+    global_width = w;
+    global_height = h;
+    glViewport(0, 0, global_width, global_height);
+    glClearColor(color.r, color.g, color.b, color.a);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+}
+
 // Fills the screen with a color
 void fill_screen(CYScreen screen, Color color) {
     SDL_SetRenderDrawColor(screen, color.r, color.g, color.b, color.a);
@@ -154,6 +204,8 @@ void fill_screen(CYScreen screen, Color color) {
 
 // shows whatever you have drawn on to the screen so far.
 void draw_screen(CYScreen screen) { SDL_RenderPresent(screen); }
+
+void draw_opengl_screen() { SDL_GL_SwapWindow(global_window); }
 
 // returns the current state of the mouse, which are it's x and y coordinates
 // with respect to the window, as well as information about what mouse buttons
@@ -226,6 +278,111 @@ int draw_centered_text(CYScreen screen, TTF_Font *font, std::string text,
 void draw_aa_circle(CYScreen screen, Pos2D pos, int radius, Color color) {
     aacircleColor(screen, pos.x, pos.y, radius, color);
     filledCircleColor(screen, pos.x, pos.y, radius, color);
+}
+
+Shape::Shape() {
+    vertex_count = 0;
+    vertices = NULL;
+    num_floats_per_vertex = 0;
+}
+
+GLsizeiptr Shape::get_size_bytes() {
+    return vertex_count * num_floats_per_vertex * sizeof(GLfloat);
+}
+GLsizeiptr Shape::get_stride_bytes() {
+    return num_floats_per_vertex * sizeof(GLfloat);
+}
+GLsizeiptr Shape::get_color_offset() {
+    return (num_floats_per_vertex - 3) * sizeof(GLfloat);
+}
+
+Shape *ShapeGenerator::get_triangle() {
+    Shape *ret = new Shape();
+    ret->vertex_count = 3;
+    ret->num_floats_per_vertex = 6;
+    GLfloat verts[] = {
+        0.0f,  1.0f,  -1.0f, // vertex1
+        1.0f,  0.0f,  0.0f,  // color1
+        1.0f,  -1.0f, 0.0f,  // vertex2
+        0.0f,  1.0f,  0.0f,  // color2
+        -1.0f, -1.0f, 0.0f,  // vertex3
+        0.0f,  0.0f,  1.0f   // color3
+    };
+    ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
+    memcpy(ret->vertices, verts, ret->get_size_bytes());
+    return ret;
+}
+Shape *ShapeGenerator::get_triangle2() {
+    Shape *ret = new Shape();
+    ret->vertex_count = 3;
+    ret->num_floats_per_vertex = 6;
+    GLfloat verts[] = {
+        -1.0f, 1.0f,  0.0f,  // vertex1
+        1.0f,  0.0f,  0.0f,  // color1
+        1.0f,  1.0f,  0.0f,  // vertex2
+        0.0f,  1.0f,  0.0f,  // color2
+        0.0f,  -1.0f, -1.0f, // vertex3
+        0.0f,  0.0f,  1.0f   // color3
+    };
+    ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
+    memcpy(ret->vertices, verts, ret->get_size_bytes());
+    return ret;
+}
+
+ShapeOnGPU ShapeRenderer::add_shape(Shape *shape) {
+    ShapeOnGPU ret;
+    ret.offset = tot_offset;
+    ret.num_vertices = shape->vertex_count;
+
+    shapes.push_back(shape);
+    shapes_on_gpu.push_back(ret);
+    tot_offset += shape->vertex_count;
+
+    return ret;
+}
+void ShapeRenderer::send_shapes() {
+    if (sent_already) {
+        std::cerr << "Cannot send shapes twice! Please add all shapes "
+                     "before sending"
+                  << std::endl;
+        exit(1);
+    }
+    sent_already = true;
+    if (!shapes.size())
+        return;
+    glGenVertexArrays(1, &vertexArrayObject);
+    glBindVertexArray(vertexArrayObject);
+
+    Shape *combined_shape = new Shape();
+    combined_shape->num_floats_per_vertex = shapes[0]->num_floats_per_vertex;
+    combined_shape->vertex_count = tot_offset;
+    combined_shape->vertices =
+        (GLfloat *)malloc(combined_shape->get_size_bytes());
+
+    int tot_byte_offset = 0;
+    for (Shape *shape : shapes) {
+        memcpy((char *)((uint64_t)combined_shape->vertices +
+                        (uint64_t)tot_byte_offset),
+               shape->vertices, shape->get_size_bytes());
+        tot_byte_offset += shape->get_size_bytes();
+    }
+
+    glGenBuffers(1, &myBufferID);
+    glBindBuffer(GL_ARRAY_BUFFER, myBufferID);
+    glBufferData(GL_ARRAY_BUFFER, combined_shape->get_size_bytes(),
+                 combined_shape->vertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
+                          combined_shape->get_stride_bytes(), 0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
+                          combined_shape->get_stride_bytes(),
+                          (void *)(combined_shape->get_color_offset()));
+    glBindVertexArray(vertexArrayObject);
+    glBindBuffer(GL_ARRAY_BUFFER, myBufferID);
+}
+void ShapeRenderer::render_shape(ShapeOnGPU shape_gpu) {
+    glDrawArrays(GL_TRIANGLES, shape_gpu.offset, shape_gpu.num_vertices);
 }
 
 Button::Button(SDL_Rect rect, std::string text, int font_size, Color color,

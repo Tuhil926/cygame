@@ -1,5 +1,7 @@
 #ifndef CYGAME_H
 #define CYGAME_H
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
 #include <vector>
 
@@ -10,6 +12,8 @@
 #include <SDL_stdinc.h>
 #include <SDL_timer.h>
 #include <SDL_ttf.h>
+#include <SDL_video.h>
+#include <glad/glad.h>
 
 #define QUIT SDL_QUIT
 #define KEYDOWN SDL_KEYDOWN
@@ -71,6 +75,7 @@
 // add more cases when necessary please, I'm not doing the rest
 
 typedef SDL_Renderer *CYScreen;
+typedef SDL_GLContext CYGLScreen;
 typedef const Uint8 *Keys;
 
 struct Color {
@@ -107,6 +112,8 @@ int cygame_init();
 
 CYScreen make_screen(int width, int height, float gui_scale = 1,
                      const char *title = "Game");
+CYGLScreen make_opengl_screen(int width, int height, float gui_scale,
+                              const char *title = "Opengl Game");
 
 void draw_rect(SDL_Rect rect, CYScreen screen, Color color);
 
@@ -124,7 +131,11 @@ void delay(int m);
 
 void clear_screen(CYScreen screen);
 
+void clear_opengl_screen(Color color);
+
 void draw_screen(CYScreen screen);
+
+void draw_opengl_screen();
 
 MouseState get_mouse_state();
 MouseState get_global_mouse_state();
@@ -137,6 +148,44 @@ int draw_centered_text(CYScreen screen, TTF_Font *font, std::string text,
                        Pos2D pos_center, Color color);
 
 void draw_aa_circle(CYScreen screen, Pos2D pos, int radius, Color color);
+
+class Shape {
+  public:
+    GLuint vertex_count;
+    GLfloat *vertices;
+    GLuint num_floats_per_vertex;
+    Shape();
+    GLsizeiptr get_size_bytes();
+    GLsizeiptr get_stride_bytes();
+    GLsizeiptr get_color_offset();
+};
+
+class ShapeGenerator {
+  public:
+    static Shape *get_triangle();
+    static Shape *get_triangle2();
+};
+
+class ShapeOnGPU {
+  public:
+    GLint offset;
+    GLsizei num_vertices;
+};
+
+class ShapeRenderer {
+  public:
+    GLuint vertexArrayObject;
+    GLuint myBufferID;
+    std::vector<Shape *> shapes;
+    std::vector<ShapeOnGPU> shapes_on_gpu;
+    int tot_offset = 0;
+    bool sent_already = false;
+    ShapeRenderer() {}
+    ShapeOnGPU add_shape(Shape *shape);
+
+    void send_shapes();
+    void render_shape(ShapeOnGPU shape_gpu);
+};
 
 // a button which takes a callback functions with a void* argument
 class Button {
