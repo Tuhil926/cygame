@@ -282,12 +282,17 @@ void draw_aa_circle(CYScreen screen, Pos2D pos, int radius, Color color) {
 
 Shape::Shape() {
     vertex_count = 0;
+    index_count = 0;
     vertices = NULL;
+    indices = NULL;
     num_floats_per_vertex = 0;
 }
 
 GLsizeiptr Shape::get_size_bytes() {
     return vertex_count * num_floats_per_vertex * sizeof(GLfloat);
+}
+GLsizeiptr Shape::get_indices_size_bytes() {
+    return index_count * sizeof(GLushort);
 }
 GLsizeiptr Shape::get_stride_bytes() {
     return num_floats_per_vertex * sizeof(GLfloat);
@@ -299,6 +304,7 @@ GLsizeiptr Shape::get_color_offset() {
 Shape *ShapeGenerator::get_triangle() {
     Shape *ret = new Shape();
     ret->vertex_count = 3;
+    ret->index_count = 3;
     ret->num_floats_per_vertex = 6;
     GLfloat verts[] = {
         0.0f,  1.0f,  -1.0f, // vertex1
@@ -308,11 +314,35 @@ Shape *ShapeGenerator::get_triangle() {
         -1.0f, -1.0f, 0.0f,  // vertex3
         0.0f,  0.0f,  1.0f   // color3
     };
+    GLushort inds[] = {0, 1, 2};
     ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
+    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
     memcpy(ret->vertices, verts, ret->get_size_bytes());
+    memcpy(ret->indices, inds, ret->get_indices_size_bytes());
     return ret;
 }
 Shape *ShapeGenerator::get_triangle2() {
+    Shape *ret = new Shape();
+    ret->vertex_count = 3;
+    ret->index_count = 3;
+    ret->num_floats_per_vertex = 6;
+    GLfloat verts[] = {
+        -1.0f, 1.0f,  0.0f,  // vertex1
+        1.0f,  0.0f,  0.0f,  // color1
+        1.0f,  1.0f,  0.0f,  // vertex2
+        0.0f,  1.0f,  0.0f,  // color2
+        0.0f,  -1.0f, -1.0f, // vertex3
+        0.0f,  0.0f,  1.0f   // color3
+    };
+    GLushort inds[] = {0, 1, 2};
+    ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
+    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
+    memcpy(ret->vertices, verts, ret->get_size_bytes());
+    memcpy(ret->indices, inds, ret->get_indices_size_bytes());
+    return ret;
+}
+
+Shape *ShapeGenerator::get_cube() {
     Shape *ret = new Shape();
     ret->vertex_count = 3;
     ret->num_floats_per_vertex = 6;
@@ -331,12 +361,15 @@ Shape *ShapeGenerator::get_triangle2() {
 
 ShapeOnGPU ShapeRenderer::add_shape(Shape *shape) {
     ShapeOnGPU ret;
-    ret.offset = tot_offset;
+    ret.offset_vertices = tot_offset_vertices;
     ret.num_vertices = shape->vertex_count;
+    ret.offset_indices = tot_offset_indices;
+    ret.num_indices = shape->index_count;
 
     shapes.push_back(shape);
     shapes_on_gpu.push_back(ret);
-    tot_offset += shape->vertex_count;
+    tot_offset_vertices += shape->vertex_count;
+    tot_offset_indices += shape->index_count;
 
     return ret;
 }
@@ -355,18 +388,35 @@ void ShapeRenderer::send_shapes() {
 
     Shape *combined_shape = new Shape();
     combined_shape->num_floats_per_vertex = shapes[0]->num_floats_per_vertex;
-    combined_shape->vertex_count = tot_offset;
+    combined_shape->vertex_count = tot_offset_vertices;
     combined_shape->vertices =
         (GLfloat *)malloc(combined_shape->get_size_bytes());
+    combined_shape->index_count = tot_offset_indices;
+    combined_shape->indices =
+        (GLushort *)malloc(combined_shape->get_indices_size_bytes());
 
-    int tot_byte_offset = 0;
+    int tot_byte_offset_vertices = 0;
+    int tot_num_indices = 0;
+    int tot_num_vertices = 0;
     for (Shape *shape : shapes) {
         memcpy((char *)((uint64_t)combined_shape->vertices +
-                        (uint64_t)tot_byte_offset),
+                        (uint64_t)tot_byte_offset_vertices),
                shape->vertices, shape->get_size_bytes());
-        tot_byte_offset += shape->get_size_bytes();
+
+        for (int i = 0; i < shape->index_count; i++) {
+            combined_shape->indices[tot_num_indices + i] =
+                tot_num_vertices + shape->indices[i];
+        }
+
+        tot_byte_offset_vertices += shape->get_size_bytes();
+        tot_num_indices += shape->index_count;
+        tot_num_vertices += shape->vertex_count;
+    }
+    for (int i = 0; i < 6; i++) {
+        std::cout << combined_shape->indices[i] << std::endl;
     }
 
+    // generate array buffer and send vertex data
     glGenBuffers(1, &myBufferID);
     glBindBuffer(GL_ARRAY_BUFFER, myBufferID);
     glBufferData(GL_ARRAY_BUFFER, combined_shape->get_size_bytes(),
@@ -378,11 +428,19 @@ void ShapeRenderer::send_shapes() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
                           combined_shape->get_stride_bytes(),
                           (void *)(combined_shape->get_color_offset()));
-    glBindVertexArray(vertexArrayObject);
-    glBindBuffer(GL_ARRAY_BUFFER, myBufferID);
+
+    // generate element array buffer and send index data
+    glGenBuffers(1, &myElementBufferID);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, myElementBufferID);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+                 combined_shape->get_indices_size_bytes(),
+                 combined_shape->indices, GL_STATIC_DRAW);
 }
 void ShapeRenderer::render_shape(ShapeOnGPU shape_gpu) {
-    glDrawArrays(GL_TRIANGLES, shape_gpu.offset, shape_gpu.num_vertices);
+    // glDrawArrays(GL_TRIANGLES, shape_gpu.offset_vertices,
+    //              shape_gpu.num_vertices);
+    glDrawElements(GL_TRIANGLES, shape_gpu.num_indices, GL_UNSIGNED_SHORT,
+                   (void *)(shape_gpu.offset_indices * sizeof(GLushort)));
 }
 
 Button::Button(SDL_Rect rect, std::string text, int font_size, Color color,

@@ -153,9 +153,12 @@ class Shape {
   public:
     GLuint vertex_count;
     GLfloat *vertices;
+    GLuint index_count;
+    GLushort *indices;
     GLuint num_floats_per_vertex;
     Shape();
     GLsizeiptr get_size_bytes();
+    GLsizeiptr get_indices_size_bytes();
     GLsizeiptr get_stride_bytes();
     GLsizeiptr get_color_offset();
 };
@@ -164,21 +167,26 @@ class ShapeGenerator {
   public:
     static Shape *get_triangle();
     static Shape *get_triangle2();
+    static Shape *get_cube();
 };
 
 class ShapeOnGPU {
   public:
-    GLint offset;
+    GLint offset_vertices;
     GLsizei num_vertices;
+    GLint offset_indices;
+    GLsizei num_indices;
 };
 
 class ShapeRenderer {
   public:
     GLuint vertexArrayObject;
     GLuint myBufferID;
+    GLuint myElementBufferID;
     std::vector<Shape *> shapes;
     std::vector<ShapeOnGPU> shapes_on_gpu;
-    int tot_offset = 0;
+    int tot_offset_vertices = 0;
+    int tot_offset_indices = 0;
     bool sent_already = false;
     ShapeRenderer() {}
     ShapeOnGPU add_shape(Shape *shape);
