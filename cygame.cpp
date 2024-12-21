@@ -5,11 +5,13 @@
 #include "glad/glad.h"
 #include "glm/common.hpp"
 #include "glm/ext/matrix_transform.hpp"
+#include "glm/ext/vector_float3.hpp"
 #include "glm/geometric.hpp"
 #include "glm/gtc/constants.hpp"
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <ostream>
 #include <vector>
@@ -86,6 +88,8 @@ CYGLScreen make_opengl_screen(int width, int height, float gui_scale,
     glViewport(0, 0, width, height);
 
     std::cout << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+
+    SDL_SetWindowFullscreen(win, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
     return rend;
 }
@@ -305,9 +309,8 @@ GLsizeiptr Shape::get_indices_size_bytes() {
 GLsizeiptr Shape::get_stride_bytes() {
     return num_floats_per_vertex * sizeof(GLfloat);
 }
-GLsizeiptr Shape::get_color_offset() {
-    return (num_floats_per_vertex - 3) * sizeof(GLfloat);
-}
+GLsizeiptr Shape::get_color_offset() { return (3) * sizeof(GLfloat); }
+GLsizeiptr Shape::get_normal_offset() { return (6) * sizeof(GLfloat); }
 
 Shape *ShapeGenerator::get_triangle() {
     Shape *ret = new Shape();
@@ -354,64 +357,88 @@ Shape *ShapeGenerator::get_cube() {
     Shape *ret = new Shape();
     ret->vertex_count = 24;
     ret->index_count = 36;
-    ret->num_floats_per_vertex = 6;
+    ret->num_floats_per_vertex = 9;
     GLfloat verts[] = {
-        1.0,      1.0,  1.0,  // top face
-        /**/ 1.0, 1.0,  0.0,  //
-        -1.0,     1.0,  1.0,  //
-        /**/ 1.0, 0.0,  1.0,  //
-        -1.0,     -1.0, 1.0,  //
-        /**/ 0.0, 0.0,  1.0,  //
-        1.0,      -1.0, 1.0,  //
-        /**/ 1.0, 0.0,  0.0,  //
-        1.0,      1.0,  -1.0, // bottom face
-        /**/ 0.0, 1.0,  1.0,  //
-        -1.0,     1.0,  -1.0, //
-        /**/ 0.0, 1.0,  0.0,  //
-        -1.0,     -1.0, -1.0, //
-        /**/ 0.0, 1.0,  0.5,  //
-        1.0,      -1.0, -1.0, //
-        /**/ 0.5, 1.0,  0.5,  //
-        1.0,      1.0,  1.0,  // right face
-        /**/ 1.0, 0.0,  0.5,  //
-        1.0,      -1.0, 1.0,  //
-        /**/ 1.0, 0.0,  1.0,  //
-        1.0,      -1.0, -1.0, //
-        /**/ 0.0, 0.0,  1.0,  //
-        1.0,      1.0,  -1.0, //
-        /**/ 0.0, 0.5,  1.0,  //
-        -1.0,     1.0,  1.0,  // left face
-        /**/ 1.0, 0.5,  1.0,  //
-        -1.0,     -1.0, 1.0,  //
-        /**/ 1.0, 0.5,  0.5,  //
-        -1.0,     -1.0, -1.0, //
-        /**/ 0.5, 0.5,  0.5,  //
-        -1.0,     1.0,  -1.0, //
-        /**/ 0.5, 1.0,  0.5,  //
-        1.0,      1.0,  1.0,  // front face
-        /**/ 0.5, 1.0,  1.0,  //
-        -1.0,     1.0,  1.0,  //
-        /**/ 0.0, 0.0,  1.0,  //
-        -1.0,     1.0,  -1.0, //
-        /**/ 0.0, 1.0,  0.0,  //
-        1.0,      1.0,  -1.0, //
-        /**/ 1.0, 1.0,  0.0,  //
-        1.0,      -1.0, 1.0,  // back face
-        /**/ 1.0, 0.0,  0.0,  //
-        -1.0,     -1.0, 1.0,  //
-        /**/ 1.0, 0.0,  1.0,  //
-        -1.0,     -1.0, -1.0, //
-        /**/ 1.0, 1.0,  0.0,  //
-        1.0,      -1.0, -1.0, //
-        /**/ 0.0, 1.0,  0.0,  //
+        1.0,       1.0,  1.0,  // top face
+        /**/ 1.0,  1.0,  0.0,  //
+        /**/ 0.0,  0.0,  1.0,  //
+        -1.0,      1.0,  1.0,  //
+        /**/ 1.0,  0.0,  1.0,  //
+        /**/ 0.0,  0.0,  1.0,  //
+        -1.0,      -1.0, 1.0,  //
+        /**/ 0.0,  0.0,  1.0,  //
+        /**/ 0.0,  0.0,  1.0,  //
+        1.0,       -1.0, 1.0,  //
+        /**/ 1.0,  0.0,  0.0,  //
+        /**/ 0.0,  0.0,  1.0,  //
+        1.0,       1.0,  -1.0, // bottom face
+        /**/ 0.0,  1.0,  1.0,  //
+        /**/ 0.0,  0.0,  -1.0, //
+        -1.0,      1.0,  -1.0, //
+        /**/ 0.0,  1.0,  0.0,  //
+        /**/ 0.0,  0.0,  -1.0, //
+        -1.0,      -1.0, -1.0, //
+        /**/ 0.0,  1.0,  0.5,  //
+        /**/ 0.0,  0.0,  -1.0, //
+        1.0,       -1.0, -1.0, //
+        /**/ 0.5,  1.0,  0.5,  //
+        /**/ 0.0,  0.0,  -1.0, //
+        1.0,       1.0,  1.0,  // right face
+        /**/ 1.0,  0.0,  0.5,  //
+        /**/ 1.0,  0.0,  0.0,  //
+        1.0,       -1.0, 1.0,  //
+        /**/ 1.0,  0.0,  1.0,  //
+        /**/ 1.0,  0.0,  0.0,  //
+        1.0,       -1.0, -1.0, //
+        /**/ 0.0,  0.0,  1.0,  //
+        /**/ 1.0,  0.0,  0.0,  //
+        1.0,       1.0,  -1.0, //
+        /**/ 0.0,  0.5,  1.0,  //
+        /**/ 1.0,  0.0,  0.0,  //
+        -1.0,      1.0,  1.0,  // left face
+        /**/ 1.0,  0.5,  1.0,  //
+        /**/ -1.0, 0.0,  0.0,  //
+        -1.0,      -1.0, 1.0,  //
+        /**/ 1.0,  0.5,  0.5,  //
+        /**/ -1.0, 0.0,  0.0,  //
+        -1.0,      -1.0, -1.0, //
+        /**/ 0.5,  0.5,  0.5,  //
+        /**/ -1.0, 0.0,  0.0,  //
+        -1.0,      1.0,  -1.0, //
+        /**/ 0.5,  1.0,  0.5,  //
+        /**/ -1.0, 0.0,  0.0,  //
+        1.0,       1.0,  1.0,  // front face
+        /**/ 0.5,  1.0,  1.0,  //
+        /**/ 0.0,  1.0,  0.0,  //
+        -1.0,      1.0,  1.0,  //
+        /**/ 0.0,  0.0,  1.0,  //
+        /**/ 0.0,  1.0,  0.0,  //
+        -1.0,      1.0,  -1.0, //
+        /**/ 0.0,  1.0,  0.0,  //
+        /**/ 0.0,  1.0,  0.0,  //
+        1.0,       1.0,  -1.0, //
+        /**/ 1.0,  1.0,  0.0,  //
+        /**/ 0.0,  1.0,  0.0,  //
+        1.0,       -1.0, 1.0,  // back face
+        /**/ 1.0,  0.0,  0.0,  //
+        /**/ 0.0,  -1.0, 0.0,  //
+        -1.0,      -1.0, 1.0,  //
+        /**/ 1.0,  0.0,  1.0,  //
+        /**/ 0.0,  -1.0, 0.0,  //
+        -1.0,      -1.0, -1.0, //
+        /**/ 1.0,  1.0,  0.0,  //
+        /**/ 0.0,  -1.0, 0.0,  //
+        1.0,       -1.0, -1.0, //
+        /**/ 0.0,  1.0,  0.0,  //
+        /**/ 0.0,  -1.0, 0.0,  //
     };
     GLushort inds[] = {
         0,  1,  2,  2,  3,  0,  //
         4,  6,  5,  6,  4,  7,  //
         8,  9,  10, 10, 11, 8,  //
         12, 14, 13, 14, 12, 15, //
-        16, 17, 18, 18, 19, 16, //
-        20, 22, 21, 22, 20, 23  //
+        16, 18, 17, 18, 16, 19, //
+        20, 21, 22, 22, 23, 20  //
     };
     ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
     ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
@@ -489,6 +516,10 @@ void ShapeRenderer::send_shapes() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
                           combined_shape->get_stride_bytes(),
                           (void *)(combined_shape->get_color_offset()));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,
+                          combined_shape->get_stride_bytes(),
+                          (void *)(combined_shape->get_normal_offset()));
 
     // generate element array buffer and send index data
     glGenBuffers(1, &myElementBufferID);
@@ -510,6 +541,76 @@ Camera::Camera() {
     front = glm::vec3(0, 0, -1);
     fov = glm::pi<float>() / 3;
     right = glm::cross(front, up);
+}
+
+Camera::Camera(std::string vertex_shader_src_file_name,
+               std::string fragment_shader_src_file_name)
+    : Camera() {
+    std::ifstream vertexShaderFile(vertex_shader_src_file_name);
+    if (!vertexShaderFile.is_open()) {
+        std::cerr << "Error: Unable to open vertex shader file" << std::endl;
+    }
+    std::string vertexShaderSrc(
+        (std::istreambuf_iterator<char>(vertexShaderFile)),
+        std::istreambuf_iterator<char>());
+    std::ifstream fragmentShaderFile(fragment_shader_src_file_name);
+    if (!fragmentShaderFile.is_open()) {
+        std::cerr << "Error: Unable to open fragment shader file" << std::endl;
+    }
+    std::string fragmentShaderSrc(
+        (std::istreambuf_iterator<char>(fragmentShaderFile)),
+        std::istreambuf_iterator<char>());
+
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    const char *vertex_src = vertexShaderSrc.c_str();
+    glShaderSource(vertexShader, 1, &vertex_src, 0);
+    glCompileShader(vertexShader);
+
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    const char *fragment_src = fragmentShaderSrc.c_str();
+    glShaderSource(fragmentShader, 1, &fragment_src, 0);
+    glCompileShader(fragmentShader);
+
+    GLint compileStatus;
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &compileStatus);
+    if (compileStatus != GL_TRUE) {
+        GLint infoLength;
+        glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &infoLength);
+        GLchar *buffer = new GLchar[infoLength];
+
+        GLsizei bufferSize;
+        glGetShaderInfoLog(vertexShader, infoLength, &bufferSize, buffer);
+        std::cerr << buffer << std::endl;
+        delete[] buffer;
+    }
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compileStatus);
+    if (compileStatus != GL_TRUE) {
+        GLint infoLength;
+        glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &infoLength);
+        GLchar *buffer = new GLchar[infoLength];
+
+        GLsizei bufferSize;
+        glGetShaderInfoLog(fragmentShader, infoLength, &bufferSize, buffer);
+        std::cerr << buffer << std::endl;
+        delete[] buffer;
+    }
+
+    GLuint programObject = glCreateProgram();
+
+    glAttachShader(programObject, vertexShader);
+    glAttachShader(programObject, fragmentShader);
+    glLinkProgram(programObject);
+    glValidateProgram(programObject);
+
+    glEnable(GL_DEPTH_TEST);
+    // glDisable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
+    glUseProgram(programObject);
+
+    full_transform_matrix_location =
+        glGetUniformLocation(programObject, "fullTransformMatrix");
+    light_direction_uniform_location =
+        glGetUniformLocation(programObject, "lightDirection");
 }
 glm::mat4 Camera::get_world_to_perspective_transform_matrix() {
     glm::vec3 looking_vector =
@@ -582,6 +683,30 @@ void Camera::toggle_minecraft_rotation() {
         minecraft_rotation = false;
         SDL_ShowCursor(SDL_ENABLE);
     }
+}
+void Camera::draw_shape(glm::mat4 model_transform_matrix,
+                        ShapeOnGPU shape_gpu) {
+    glm::mat4 full_transform_matrix =
+        get_world_to_perspective_transform_matrix() * model_transform_matrix;
+    glm::vec3 light_direction(1.0f, 3.0f, 2.0f);
+    light_direction = glm::normalize(light_direction);
+    glUniformMatrix4fv(full_transform_matrix_location, 1, GL_FALSE,
+                       &full_transform_matrix[0][0]);
+    glUniform3fv(light_direction_uniform_location, 1, &light_direction[0]);
+    ShapeRenderer::render_shape(shape_gpu);
+}
+
+Object::Object(ShapeOnGPU shape_on_gpu) {
+    this->shape_on_gpu = shape_on_gpu;
+    position = glm::vec3(0.0f, 0.0f, -3.0f);
+}
+glm::mat4 Object::get_model_to_world_transform_matrix() {
+    glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), position);
+    return translation_matrix;
+}
+void Object::draw(Camera &camera) {
+    camera.draw_shape(get_model_to_world_transform_matrix(),
+                      this->shape_on_gpu);
 }
 
 Button::Button(SDL_Rect rect, std::string text, int font_size, Color color,

@@ -1,6 +1,5 @@
 #include "cygame.h"
 #include "glad/glad.h"
-#include <fstream>
 #include <iostream>
 
 using namespace std;
@@ -13,85 +12,26 @@ int main() {
     // initialises sdl.
     cygame_init();
 
-    CYGLScreen screen = make_opengl_screen(1000, 700, 1, "Cygame opengl demo!");
+    make_opengl_screen(1000, 700, 1, "Cygame opengl demo!");
     bool running = true;
 
-    Shape *triangle = ShapeGenerator::get_triangle();
-    Shape *triangle2 = ShapeGenerator::get_triangle2();
     Shape *cube = ShapeGenerator::get_cube();
 
     ShapeRenderer renderer;
-    auto tri_gpu = renderer.add_shape(triangle);
-    auto tri_gpu2 = renderer.add_shape(triangle2);
     auto cube_gpu = renderer.add_shape(cube);
-
-    Camera camera;
 
     // creating the shader program
 
-    ifstream vertexShaderFile("vertex_shader_demo.glslv");
-    if (!vertexShaderFile.is_open()) {
-        cerr << "Error: Unable to open vertex shader file" << endl;
-    }
-    string vertexShaderSrc((istreambuf_iterator<char>(vertexShaderFile)),
-                           istreambuf_iterator<char>());
-    ifstream fragmentShaderFile("fragment_shader_demo.glslf");
-    if (!fragmentShaderFile.is_open()) {
-        cerr << "Error: Unable to open fragment shader file" << endl;
-    }
-    string fragmentShaderSrc((istreambuf_iterator<char>(fragmentShaderFile)),
-                             istreambuf_iterator<char>());
+    Camera camera("vertex_shader_demo.glslv", "fragment_shader_demo.glslf");
 
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    const char *vertex_src = vertexShaderSrc.c_str();
-    glShaderSource(vertexShader, 1, &vertex_src, 0);
-    glCompileShader(vertexShader);
-
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    const char *fragment_src = fragmentShaderSrc.c_str();
-    glShaderSource(fragmentShader, 1, &fragment_src, 0);
-    glCompileShader(fragmentShader);
-
-    GLint compileStatus;
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &compileStatus);
-    if (compileStatus != GL_TRUE) {
-        GLint infoLength;
-        glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &infoLength);
-        GLchar *buffer = new GLchar[infoLength];
-
-        GLsizei bufferSize;
-        glGetShaderInfoLog(vertexShader, infoLength, &bufferSize, buffer);
-        cout << buffer << endl;
-        delete[] buffer;
-    }
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compileStatus);
-    if (compileStatus != GL_TRUE) {
-        GLint infoLength;
-        glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &infoLength);
-        GLchar *buffer = new GLchar[infoLength];
-
-        GLsizei bufferSize;
-        glGetShaderInfoLog(fragmentShader, infoLength, &bufferSize, buffer);
-        cout << buffer << endl;
-        delete[] buffer;
-    }
-
-    GLuint programObject = glCreateProgram();
-
-    glAttachShader(programObject, vertexShader);
-    glAttachShader(programObject, fragmentShader);
-    glLinkProgram(programObject);
-    glValidateProgram(programObject);
-
-    glEnable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
-    glUseProgram(programObject);
-
-    vec3 camera_position(0.0f, 0.0f, 0.0f);
-
-    // glBindVertexArray(renderer.vertexArrayObject);
-    // glBindBuffer(GL_ARRAY_BUFFER, renderer.myBufferID);
     renderer.send_shapes();
+
+    Object cube_object(cube_gpu);
+    Object cube_object_2(cube_gpu);
+    Object cube_object_3(cube_gpu);
+    cube_object_2.position.z = -7;
+    cube_object_3.position.x = -7;
+
     while (running) {
         // you need to use this handle_event macro if you want to be able to use
         // the input box. don't ask me why. It's just convenient and easier than
@@ -121,40 +61,21 @@ int main() {
 
         Keys keys = get_keys_pressed();
 
+        if (keys[K_t]) {
+            cube_object_2.position.x -= 0.05;
+        }
+
         // this is a similar thing for the mouse input.
 
         MouseState mouse_state = get_mouse_state();
 
         camera.track_input(keys, mouse_state, 1.0 / 60.0);
 
-        mat4 model_transform_matrix = glm::translate(mat4(1), vec3(0, 0, -4));
-        // *glm::rotate(mat4(1), quarter_pi<float>(), vec3(1.0, 1.0, 0.0));
-
-        mat4 full_transform_matrix =
-            camera.get_world_to_perspective_transform_matrix() *
-            model_transform_matrix;
-
-        // for (int i = 0; i < 4; i++) {
-        //     for (int j = 0; j < 4; j++) {
-        //         cout << full_transform_matrix[i][j] << " ";
-        //     }
-        //     cout << endl;
-        // }
-        // cout << endl;
-        // cout << endl;
-
-        GLint full_transform_matrix_location =
-            glGetUniformLocation(programObject, "fullTransformMatrix");
-        // cout << full_transform_matrix_location << endl;
-        glUniformMatrix4fv(full_transform_matrix_location, 1, GL_FALSE,
-                           &full_transform_matrix[0][0]);
-
-        // opengl stuff
         clear_opengl_screen({0, 0, 0, 0});
 
-        // renderer.render_shape(tri_gpu);
-        // renderer.render_shape(tri_gpu2);
-        renderer.render_shape(cube_gpu);
+        cube_object.draw(camera);
+        cube_object_2.draw(camera);
+        cube_object_3.draw(camera);
 
         // just swaps the buffers
         draw_opengl_screen();

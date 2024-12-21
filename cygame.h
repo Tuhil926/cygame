@@ -13,6 +13,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/mat4x4.hpp>
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include <SDL.h>
@@ -175,6 +176,7 @@ class Shape {
     GLsizeiptr get_indices_size_bytes();
     GLsizeiptr get_stride_bytes();
     GLsizeiptr get_color_offset();
+    GLsizeiptr get_normal_offset();
 };
 
 class ShapeGenerator {
@@ -206,7 +208,7 @@ class ShapeRenderer {
     ShapeOnGPU add_shape(Shape *shape);
 
     void send_shapes();
-    void render_shape(ShapeOnGPU shape_gpu);
+    static void render_shape(ShapeOnGPU shape_gpu);
 };
 
 class Camera {
@@ -222,7 +224,12 @@ class Camera {
     MouseState prev_mouse_state;
     float movement_speed = 5;
     bool minecraft_rotation = false;
+    GLuint full_transform_matrix_location;
+    GLuint light_direction_uniform_location;
+    GLuint programObject;
     Camera();
+    Camera(std::string vertex_shader_src_file_name,
+           std::string fragment_shader_src_file_name);
     glm::mat4 get_world_to_perspective_transform_matrix();
     void rotate_left_right(float angle);
     void rotate_up_down(float angle);
@@ -231,6 +238,18 @@ class Camera {
     void move_up(float distance);
     void track_input(Keys keys, MouseState mouse_state, float dt);
     void toggle_minecraft_rotation();
+    void draw_shape(glm::mat4 full_transform_matrix, ShapeOnGPU shape_gpu);
+};
+
+class Object {
+  public:
+    ShapeOnGPU shape_on_gpu;
+    glm::vec3 position;
+    glm::vec3 rotation;
+    glm::vec3 scale;
+    Object(ShapeOnGPU shape_on_gpu);
+    glm::mat4 get_model_to_world_transform_matrix();
+    void draw(Camera &camera);
 };
 
 // a button which takes a callback functions with a void* argument
