@@ -1,8 +1,17 @@
 #ifndef CYGAME_H
 #define CYGAME_H
 #include "SDL_scancode.h"
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/ext/matrix_float4x4.hpp"
+#include "glm/ext/matrix_transform.hpp"
+#include "glm/ext/scalar_constants.hpp"
+#include "glm/ext/vector_float3.hpp"
+#include "glm/ext/vector_float4.hpp"
+#include "glm/gtc/constants.hpp"
 #include <cstdlib>
 #include <cstring>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/mat4x4.hpp>
 #include <iostream>
 #include <vector>
 
@@ -56,6 +65,7 @@
 #define K_z SDL_SCANCODE_Z
 #define K_space SDL_SCANCODE_SPACE
 #define K_shift SDL_SCANCODE_LSHIFT
+#define K_ctrl SDL_SCANCODE_LCTRL
 #define K_0 SDL_SCANCODE_0
 #define K_1 SDL_SCANCODE_1
 #define K_2 SDL_SCANCODE_2
@@ -75,7 +85,6 @@
 #define Mouse_right SDL_BUTTON_RMASK
 #define Mouse_middle SDL_BUTTON_MMASK
 // add more cases when necessary please, I'm not doing the rest
-
 
 typedef SDL_Renderer *CYScreen;
 typedef SDL_GLContext CYGLScreen;
@@ -140,6 +149,8 @@ void draw_screen(CYScreen screen);
 
 void draw_opengl_screen();
 
+float get_global_aspect_ratio();
+
 MouseState get_mouse_state();
 MouseState get_global_mouse_state();
 
@@ -196,6 +207,30 @@ class ShapeRenderer {
 
     void send_shapes();
     void render_shape(ShapeOnGPU shape_gpu);
+};
+
+class Camera {
+  public:
+    glm::vec3 position;
+    glm::vec3 up;
+    glm::vec3 front;
+    glm::vec3 right;
+    float fov;
+    float near_plane = 0.1;
+    float far_plane = 50;
+    float looking_angle = 0.0;
+    MouseState prev_mouse_state;
+    float movement_speed = 5;
+    bool minecraft_rotation = false;
+    Camera();
+    glm::mat4 get_world_to_perspective_transform_matrix();
+    void rotate_left_right(float angle);
+    void rotate_up_down(float angle);
+    void move_front(float distance);
+    void strafe(float distance);
+    void move_up(float distance);
+    void track_input(Keys keys, MouseState mouse_state, float dt);
+    void toggle_minecraft_rotation();
 };
 
 // a button which takes a callback functions with a void* argument

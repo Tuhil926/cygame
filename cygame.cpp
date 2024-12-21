@@ -1,6 +1,12 @@
 #include "cygame.h"
+#include "SDL_events.h"
+#include "SDL_mouse.h"
 #include "SDL_video.h"
 #include "glad/glad.h"
+#include "glm/common.hpp"
+#include "glm/ext/matrix_transform.hpp"
+#include "glm/geometric.hpp"
+#include "glm/gtc/constants.hpp"
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -195,6 +201,8 @@ void clear_opengl_screen(Color color) {
     glClearColor(color.r, color.g, color.b, color.a);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
+
+float get_global_aspect_ratio() { return global_width / (float)global_height; }
 
 // Fills the screen with a color
 void fill_screen(CYScreen screen, Color color) {
@@ -494,6 +502,86 @@ void ShapeRenderer::render_shape(ShapeOnGPU shape_gpu) {
     //              shape_gpu.num_vertices);
     glDrawElements(GL_TRIANGLES, shape_gpu.num_indices, GL_UNSIGNED_SHORT,
                    (void *)(shape_gpu.offset_indices * sizeof(GLushort)));
+}
+
+Camera::Camera() {
+    position = glm::vec3(0, 0, 0);
+    up = glm::vec3(0, 1, 0);
+    front = glm::vec3(0, 0, -1);
+    fov = glm::pi<float>() / 3;
+    right = glm::cross(front, up);
+}
+glm::mat4 Camera::get_world_to_perspective_transform_matrix() {
+    glm::vec3 looking_vector =
+        glm::vec3(glm::rotate(glm::mat4(1), looking_angle, right) *
+                  glm::vec4(front, 1.0));
+    return glm::perspective(fov, get_global_aspect_ratio(), near_plane,
+                            far_plane) *
+           glm::lookAt(position, position + looking_vector, up);
+}
+void Camera::rotate_left_right(float angle) {
+    front =
+        glm::vec3(glm::rotate(glm::mat4(1), angle, up) * glm::vec4(front, 1.0));
+    right = glm::cross(front, up);
+}
+void Camera::rotate_up_down(float angle) {
+    looking_angle += angle;
+    looking_angle = glm::clamp(looking_angle, -glm::half_pi<float>() + 0.00001f,
+                               glm::half_pi<float>() - 0.00001f);
+}
+void Camera::move_front(float distance) { position += front * distance; }
+void Camera::strafe(float distance) { position += right * distance; }
+void Camera::move_up(float distance) { position += up * distance; }
+void Camera::track_input(Keys keys, MouseState mouse_state, float dt) {
+    float distance = movement_speed * dt;
+    if (keys[K_ctrl]) {
+        distance *= 3;
+    }
+    if (keys[K_w]) {
+        move_front(distance);
+    }
+    if (keys[K_s]) {
+        move_front(-distance);
+    }
+    if (keys[K_a]) {
+        strafe(-distance);
+    }
+    if (keys[K_d]) {
+        strafe(distance);
+    }
+    if (keys[K_shift]) {
+        move_up(-distance);
+    }
+    if (keys[K_space]) {
+        move_up(distance);
+    }
+    if (minecraft_rotation) {
+        rotate_left_right(-(mouse_state.x - prev_mouse_state.x) * 2.0 /
+                          global_width);
+        rotate_up_down(-(mouse_state.y - prev_mouse_state.y) * 2.0 /
+                       global_width);
+        SDL_WarpMouseInWindow(global_window, global_width / 2,
+                              global_height / 2);
+        prev_mouse_state.x = global_width / 2;
+        prev_mouse_state.y = global_height / 2;
+    } else {
+        if (mouse_state.pressed_left()) {
+            rotate_left_right((mouse_state.x - prev_mouse_state.x) * 2.0 /
+                              global_width);
+            rotate_up_down((mouse_state.y - prev_mouse_state.y) * 2.0 /
+                           global_width);
+        }
+        prev_mouse_state = mouse_state;
+    }
+}
+void Camera::toggle_minecraft_rotation() {
+    if (!minecraft_rotation) {
+        minecraft_rotation = true;
+        SDL_ShowCursor(SDL_DISABLE);
+    } else {
+        minecraft_rotation = false;
+        SDL_ShowCursor(SDL_ENABLE);
+    }
 }
 
 Button::Button(SDL_Rect rect, std::string text, int font_size, Color color,

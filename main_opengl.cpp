@@ -1,12 +1,6 @@
 #include "cygame.h"
 #include "glad/glad.h"
-#include "glm/ext/matrix_clip_space.hpp"
-#include "glm/ext/matrix_transform.hpp"
-#include "glm/ext/vector_float3.hpp"
-#include "glm/gtc/constants.hpp"
 #include <fstream>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/mat4x4.hpp>
 #include <iostream>
 
 using namespace std;
@@ -30,6 +24,8 @@ int main() {
     auto tri_gpu = renderer.add_shape(triangle);
     auto tri_gpu2 = renderer.add_shape(triangle2);
     auto cube_gpu = renderer.add_shape(cube);
+
+    Camera camera;
 
     // creating the shader program
 
@@ -112,8 +108,8 @@ int main() {
             // handle_events, because they use the _event variable. This is
             // a switch statement on the keycode
             handle_keycode {
-            // case K_w:
-            //     printf("You pressed w!\n");
+            case K_m:
+                camera.toggle_minecraft_rotation();
             default:
                 break;
             }
@@ -125,39 +121,18 @@ int main() {
 
         Keys keys = get_keys_pressed();
 
-        if (keys[K_w]) {
-            camera_position.z -= 0.01;
-        }
-        if (keys[K_s]) {
-            camera_position.z += 0.01;
-        }
-        if (keys[K_a]) {
-            camera_position.x -= 0.01;
-        }
-        if (keys[K_d]) {
-            camera_position.x += 0.01;
-        }
-        if (keys[K_shift]) {
-            camera_position.y -= 0.01;
-        }
-        if (keys[K_space]) {
-            camera_position.y += 0.01;
-        }
-
         // this is a similar thing for the mouse input.
 
         MouseState mouse_state = get_mouse_state();
 
-        mat4 model_transform_matrix =
-            glm::translate(mat4(1), vec3(0, 0, -4)) *
-            glm::rotate(mat4(1), quarter_pi<float>(), vec3(1.0, 1.0, 0.0));
-        mat4 world_to_view_matrix = lookAt(
-            camera_position, camera_position + vec3(0, 0, -1), vec3(0, 1, 0));
-        mat4 projection_matrix =
-            glm::perspective(pi<float>() / 3, 1000.0f / 700.0f, 0.1f, 10.0f);
+        camera.track_input(keys, mouse_state, 1.0 / 60.0);
+
+        mat4 model_transform_matrix = glm::translate(mat4(1), vec3(0, 0, -4));
+        // *glm::rotate(mat4(1), quarter_pi<float>(), vec3(1.0, 1.0, 0.0));
 
         mat4 full_transform_matrix =
-            projection_matrix * world_to_view_matrix * model_transform_matrix;
+            camera.get_world_to_perspective_transform_matrix() *
+            model_transform_matrix;
 
         // for (int i = 0; i < 4; i++) {
         //     for (int j = 0; j < 4; j++) {
