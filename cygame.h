@@ -184,6 +184,7 @@ class ShapeGenerator {
     static Shape *get_triangle();
     static Shape *get_triangle2();
     static Shape *get_cube();
+    static Shape *get_sphere(int num_verts_in_circle, int num_circles);
 };
 
 class ShapeOnGPU {

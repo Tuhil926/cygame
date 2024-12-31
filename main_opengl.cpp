@@ -16,9 +16,12 @@ int main() {
     bool running = true;
 
     Shape *cube = ShapeGenerator::get_cube();
+    Shape *sphere = ShapeGenerator::get_sphere(200, 100);
+    // Shape *sphere = ShapeGenerator::get_cube();
 
     ShapeRenderer renderer;
     auto cube_gpu = renderer.add_shape(cube);
+    auto sphere_gpu = renderer.add_shape(sphere);
 
     // creating the shader program
 
@@ -29,8 +32,10 @@ int main() {
     Object cube_object(cube_gpu);
     Object cube_object_2(cube_gpu);
     Object cube_object_3(cube_gpu);
+    Object sphere_object(sphere_gpu);
     cube_object_2.position.z = -7;
     cube_object_3.position.x = -7;
+    sphere_object.position.z = -7;
 
     while (running) {
         // you need to use this handle_event macro if you want to be able to use
@@ -73,9 +78,10 @@ int main() {
 
         clear_opengl_screen({0, 0, 0, 0});
 
+        sphere_object.draw(camera);
         cube_object.draw(camera);
-        cube_object_2.draw(camera);
-        cube_object_3.draw(camera);
+        // cube_object_2.draw(camera);
+        // cube_object_3.draw(camera);
 
         // just swaps the buffers
         draw_opengl_screen();

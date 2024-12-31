@@ -4,13 +4,13 @@
 #include "SDL_video.h"
 #include "glad/glad.h"
 #include "glm/common.hpp"
+#include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/matrix_transform.hpp"
+#include "glm/ext/scalar_constants.hpp"
 #include "glm/ext/vector_float3.hpp"
+#include "glm/ext/vector_float4.hpp"
 #include "glm/geometric.hpp"
 #include "glm/gtc/constants.hpp"
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <ostream>
@@ -35,13 +35,13 @@ float global_width, global_height;
 /// @param gui_scale the current gui scale of your laptop. 1 by default, but if
 /// it's set to 1.5 for example, then the final screen will be scaled down
 /// by 1.5
-/// @return
+/// @return CYScreen
 CYScreen make_screen(int width, int height, float gui_scale,
                      const char *title) {
-    SDL_Window *win = SDL_CreateWindow(
-        title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        (int)((float)width / gui_scale), (int)((float)height / gui_scale),
-        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+    SDL_Window *win =
+        SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                         (int)(width / gui_scale), (int)(height / gui_scale),
+                         SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     global_window = win;
 
     // triggers the program that controls
@@ -66,15 +66,10 @@ CYGLScreen make_opengl_screen(int width, int height, float gui_scale,
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_Window *win = SDL_CreateWindow(
         title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        (int)((float)width / gui_scale), (int)((float)height / gui_scale),
+        (int)(width / gui_scale), (int)(height / gui_scale),
         SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL);
     global_window = win;
 
-    // triggers the program that controls
-    // your graphics hardware and sets flags
-    Uint32 render_flags = SDL_RENDERER_ACCELERATED;
-
-    // creates a renderer to render our images
     global_width = width;
     global_height = height;
     CYGLScreen rend = SDL_GL_CreateContext(win);
@@ -273,8 +268,8 @@ int draw_centered_text(CYScreen screen, TTF_Font *font, std::string text,
     SDL_Surface *text_surface = TTF_RenderText_Solid(font, text.c_str(), color);
     SDL_Texture *text_texture =
         SDL_CreateTextureFromSurface(screen, text_surface);
-    SDL_Rect pos_rect = {(int)(pos_center.x - text_surface->w / 2),
-                         (int)(pos_center.y - text_surface->h / 2),
+    SDL_Rect pos_rect = {(int)(pos_center.x - (float)text_surface->w / 2),
+                         (int)(pos_center.y - (float)text_surface->h / 2),
                          text_surface->w, text_surface->h};
     SDL_RenderCopy(screen, text_texture, NULL, &pos_rect);
     int ret = text_surface->w;
@@ -311,6 +306,8 @@ GLsizeiptr Shape::get_stride_bytes() {
 }
 GLsizeiptr Shape::get_color_offset() { return (3) * sizeof(GLfloat); }
 GLsizeiptr Shape::get_normal_offset() { return (6) * sizeof(GLfloat); }
+
+const int NUM_FLOATS_PER_VERTEX = 9;
 
 Shape *ShapeGenerator::get_triangle() {
     Shape *ret = new Shape();
@@ -357,7 +354,7 @@ Shape *ShapeGenerator::get_cube() {
     Shape *ret = new Shape();
     ret->vertex_count = 24;
     ret->index_count = 36;
-    ret->num_floats_per_vertex = 9;
+    ret->num_floats_per_vertex = NUM_FLOATS_PER_VERTEX;
     GLfloat verts[] = {
         1.0,       1.0,  1.0,  // top face
         /**/ 1.0,  1.0,  0.0,  //
@@ -444,6 +441,121 @@ Shape *ShapeGenerator::get_cube() {
     ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
     memcpy(ret->vertices, verts, ret->get_size_bytes());
     memcpy(ret->indices, inds, ret->get_indices_size_bytes());
+    return ret;
+}
+
+Shape *ShapeGenerator::get_sphere(int num_verts_in_circle, int num_circles) {
+    Shape *ret = new Shape();
+    ret->vertex_count = 2 + num_verts_in_circle * num_circles;
+    ret->index_count = (num_circles - 1) * num_verts_in_circle * 6 +
+                       2 * num_verts_in_circle * 3;
+    ret->num_floats_per_vertex = NUM_FLOATS_PER_VERTEX;
+    // GLfloat verts[] = {
+    //     -1.0f, 1.0f,  0.0f,  // vertex1
+    //     1.0f,  0.0f,  0.0f,  // color1
+    //     1.0f,  1.0f,  0.0f,  // vertex2
+    //     0.0f,  1.0f,  0.0f,  // color2
+    //     0.0f,  -1.0f, -1.0f, // vertex3
+    //     0.0f,  0.0f,  1.0f   // color3
+    // };
+    // GLushort inds[] = {0, 1, 2};
+    std::vector<GLfloat> verts;
+    std::vector<GLushort> inds;
+    float angle = -glm::half_pi<float>();
+    for (int i = 0; i < num_circles; i++) {
+        glm::vec4 vert(1.0f, 0.0f, 0.0f, 0.0f);
+        angle += glm::pi<float>() / (float)(num_circles + 1);
+        auto rotate_mat = glm::rotate(glm::mat4(1), angle, {0.0f, 0.0f, 1.0f});
+        vert = rotate_mat * vert;
+        float y_angle = 0.0f;
+        for (int j = 0; j < num_verts_in_circle; j++) {
+            auto rotate_mat_y =
+                glm::rotate(glm::mat4(1), y_angle, {0.0f, 1.0f, 0.0f});
+            auto new_vert = rotate_mat_y * vert;
+            // position
+            verts.push_back(new_vert.x);
+            verts.push_back(new_vert.y);
+            verts.push_back(new_vert.z);
+
+            // color
+            verts.push_back(1.0);
+            verts.push_back(1.0);
+            verts.push_back(1.0);
+
+            // normal
+            verts.push_back(new_vert.x);
+            verts.push_back(new_vert.y);
+            verts.push_back(new_vert.z);
+
+            y_angle += glm::two_pi<float>() / (float)num_verts_in_circle;
+        }
+    }
+    // top vertex
+    verts.push_back(0.0);
+    verts.push_back(1.0);
+    verts.push_back(0.0);
+
+    verts.push_back(1.0);
+    verts.push_back(1.0);
+    verts.push_back(1.0);
+
+    verts.push_back(0.0);
+    verts.push_back(1.0);
+    verts.push_back(0.0);
+
+    // bottom vertex
+    verts.push_back(0.0);
+    verts.push_back(-1.0);
+    verts.push_back(0.0);
+
+    verts.push_back(1.0);
+    verts.push_back(1.0);
+    verts.push_back(1.0);
+
+    verts.push_back(0.0);
+    verts.push_back(-1.0);
+    verts.push_back(0.0);
+
+    for (int circle_ind = 0; circle_ind < num_circles - 1; circle_ind++) {
+        for (int vert_ind = 0; vert_ind < num_verts_in_circle; vert_ind++) {
+            int actual_vert_ind1 = circle_ind * num_verts_in_circle + vert_ind;
+            int actual_vert_ind2 = circle_ind * num_verts_in_circle +
+                                   (vert_ind + 1) % num_verts_in_circle;
+            int actual_vert_ind3 = (circle_ind + 1) * num_verts_in_circle +
+                                   (vert_ind + 1) % num_verts_in_circle;
+            int actual_vert_ind4 =
+                (circle_ind + 1) * num_verts_in_circle + vert_ind;
+            inds.push_back(actual_vert_ind1);
+            inds.push_back(actual_vert_ind2);
+            inds.push_back(actual_vert_ind3);
+            inds.push_back(actual_vert_ind1);
+            inds.push_back(actual_vert_ind3);
+            inds.push_back(actual_vert_ind4);
+        }
+    }
+    for (int vert_ind = 0; vert_ind < num_verts_in_circle; vert_ind++) {
+        int top_vert_ind = num_verts_in_circle * num_circles;
+        int actual_vert_ind_top1 =
+            (num_circles - 1) * num_verts_in_circle + vert_ind;
+        int actual_vert_ind_top2 = (num_circles - 1) * num_verts_in_circle +
+                                   (vert_ind + 1) % num_verts_in_circle;
+        inds.push_back(actual_vert_ind_top1);
+        inds.push_back(actual_vert_ind_top2);
+        inds.push_back(top_vert_ind);
+
+        int bottom_vert_ind = num_verts_in_circle * num_circles + 1;
+        int actual_vert_ind_bottom1 = vert_ind;
+        int actual_vert_ind_bottom2 = (vert_ind + 1) % num_verts_in_circle;
+        inds.push_back(actual_vert_ind_bottom2);
+        inds.push_back(actual_vert_ind_bottom1);
+        inds.push_back(bottom_vert_ind);
+    }
+    assert(verts.size() == ret->vertex_count * NUM_FLOATS_PER_VERTEX);
+    assert(inds.size() == ret->index_count);
+    ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
+    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
+    memcpy(ret->vertices, verts.data(), ret->get_size_bytes());
+    memcpy(ret->indices, inds.data(), ret->get_indices_size_bytes());
     return ret;
 }
 
@@ -976,8 +1088,8 @@ Selector::Selector(SDL_Rect rect, int font_size,
 }
 void Selector::draw(CYScreen screen) {
     original_button.draw(screen);
-    Pos2D arrow_center = {rect.x + rect.w - (float)rect.h / 3,
-                          rect.y + (float)rect.h / 2};
+    Pos2D arrow_center = {rect.x + rect.w - rect.h / 3.0f,
+                          rect.y + rect.h / 2.0f};
     if (is_dropped_down) {
         for (int i = 0; i < options.size(); i++) {
             buttons[i].draw(screen);
