@@ -10,6 +10,7 @@
 #include "glm/gtc/constants.hpp"
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/mat4x4.hpp>
 #include <iostream>
@@ -123,6 +124,11 @@ struct MouseState {
 
 int cygame_init();
 
+SDL_Window *get_global_window();
+float get_global_width();
+float get_global_height();
+void set_global_dimensions_to_window_width();
+
 CYScreen make_screen(int width, int height, float gui_scale = 1,
                      const char *title = "Game");
 CYGLScreen make_opengl_screen(int width, int height, float gui_scale,
@@ -163,6 +169,8 @@ int draw_centered_text(CYScreen screen, TTF_Font *font, std::string text,
                        Pos2D pos_center, Color color);
 
 void draw_aa_circle(CYScreen screen, Pos2D pos, int radius, Color color);
+
+#define NUM_FLOATS_PER_VERTEX 9
 
 class Shape {
   public:

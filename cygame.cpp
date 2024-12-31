@@ -3,30 +3,31 @@
 #include "SDL_mouse.h"
 #include "SDL_video.h"
 #include "glad/glad.h"
-#include "glm/common.hpp"
-#include "glm/ext/matrix_float4x4.hpp"
-#include "glm/ext/matrix_transform.hpp"
-#include "glm/ext/scalar_constants.hpp"
-#include "glm/ext/vector_float3.hpp"
-#include "glm/ext/vector_float4.hpp"
-#include "glm/geometric.hpp"
-#include "glm/gtc/constants.hpp"
-#include <fstream>
 #include <iostream>
 #include <ostream>
 #include <vector>
+
 // initialises SDL2 and SDL2_TTF
 int cygame_init() {
     if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
         printf("error initializing SDL: %s\n", SDL_GetError());
     }
-
     TTF_Init();
     std::cout << "Welcome to the cygame community (estimated size: 1 person)\n";
     return 0;
 }
 SDL_Window *global_window;
 float global_width, global_height;
+
+SDL_Window *get_global_window() { return global_window; }
+float get_global_width() { return global_width; }
+float get_global_height() { return global_height; }
+void set_global_dimensions_to_window_width() {
+    int w, h;
+    SDL_GetWindowSize(global_window, &w, &h);
+    global_width = w;
+    global_height = h;
+}
 
 /// @brief returns an SDL_Renderer in a window onto which all your subsequent
 /// graphics can be rendered to
@@ -35,6 +36,7 @@ float global_width, global_height;
 /// @param gui_scale the current gui scale of your laptop. 1 by default, but if
 /// it's set to 1.5 for example, then the final screen will be scaled down
 /// by 1.5
+/// @param title
 /// @return CYScreen
 CYScreen make_screen(int width, int height, float gui_scale,
                      const char *title) {
@@ -53,9 +55,19 @@ CYScreen make_screen(int width, int height, float gui_scale,
     SDL_RenderSetLogicalSize(rend, width, height);
     global_width = width;
     global_height = height;
+    // SDL_SetWindowFullscreen(win, SDL_WINDOW_FULLSCREEN_DESKTOP);
     return rend;
 }
 
+/// @brief makes an opengl screen and returns the opengl context. You dont need
+/// to store the opengl context anywhere, it's global to opengl
+/// @param width
+/// @param height
+/// @param gui_scale the current gui scale of your laptop. 1 by default, but if
+/// it's set to 1.5 for example, then the final screen will be scaled down
+/// by 1.5
+/// @param title
+/// @return CYGLScreen
 CYGLScreen make_opengl_screen(int width, int height, float gui_scale,
                               const char *title) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
@@ -81,10 +93,16 @@ CYGLScreen make_opengl_screen(int width, int height, float gui_scale,
     }
 
     glViewport(0, 0, width, height);
+    const unsigned char *glsl_version =
+        glGetString(GL_SHADING_LANGUAGE_VERSION);
+    if (glsl_version)
+        std::cout << glsl_version << std::endl;
+    else
+        std::cout << "glsl version could not be detected, it looks like glad "
+                     "is not working properly "
+                     "(glGetString(GL_SHADING_LANGUAGE_VERSION) returned 0)\n";
 
-    std::cout << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-
-    SDL_SetWindowFullscreen(win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    // SDL_SetWindowFullscreen(win, SDL_WINDOW_FULLSCREEN_DESKTOP);
 
     return rend;
 }
@@ -192,16 +210,13 @@ void clear_screen(CYScreen screen) {
 }
 
 void clear_opengl_screen(Color color) {
-    int w, h;
-    SDL_GetWindowSize(global_window, &w, &h);
-    global_width = w;
-    global_height = h;
-    glViewport(0, 0, global_width, global_height);
     glClearColor(color.r, color.g, color.b, color.a);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
-float get_global_aspect_ratio() { return global_width / (float)global_height; }
+float get_global_aspect_ratio() {
+    return get_global_width() / (float)get_global_height();
+}
 
 // Fills the screen with a color
 void fill_screen(CYScreen screen, Color color) {
@@ -210,9 +225,18 @@ void fill_screen(CYScreen screen, Color color) {
 }
 
 // shows whatever you have drawn on to the screen so far.
-void draw_screen(CYScreen screen) { SDL_RenderPresent(screen); }
+void draw_screen(CYScreen screen) {
+    // set_global_dimensions_to_window_width();
+    // SDL_RenderSetLogicalSize(screen, get_global_width(),
+    // get_global_height());
+    SDL_RenderPresent(screen);
+}
 
-void draw_opengl_screen() { SDL_GL_SwapWindow(global_window); }
+void draw_opengl_screen() {
+    set_global_dimensions_to_window_width();
+    glViewport(0, 0, get_global_width(), get_global_height());
+    SDL_GL_SwapWindow(get_global_window());
+}
 
 // returns the current state of the mouse, which are it's x and y coordinates
 // with respect to the window, as well as information about what mouse buttons
@@ -224,8 +248,11 @@ MouseState get_mouse_state() {
     Uint32 buttons = SDL_GetMouseState(&x, &y);
 
     int w, h;
-    SDL_GetWindowSize(global_window, &w, &h);
-    float fx = x, fy = y, fw = w, fh = h;
+    SDL_GetWindowSize(get_global_window(), &w, &h);
+    // std::cout << w << " " << h << std::endl;
+    // std::cout << global_width << " " << global_height << std::endl;
+    float fx = x, fy = y, fw = w, fh = h, global_width = get_global_width(),
+          global_height = get_global_height();
     if (fw / fh < global_width / global_height) {
         float scaling_factor = fw / global_width;
         float y_offset = (h - (global_height * scaling_factor)) / 2.;
@@ -285,844 +312,4 @@ int draw_centered_text(CYScreen screen, TTF_Font *font, std::string text,
 void draw_aa_circle(CYScreen screen, Pos2D pos, int radius, Color color) {
     aacircleColor(screen, pos.x, pos.y, radius, color);
     filledCircleColor(screen, pos.x, pos.y, radius, color);
-}
-
-Shape::Shape() {
-    vertex_count = 0;
-    index_count = 0;
-    vertices = NULL;
-    indices = NULL;
-    num_floats_per_vertex = 0;
-}
-
-GLsizeiptr Shape::get_size_bytes() {
-    return vertex_count * num_floats_per_vertex * sizeof(GLfloat);
-}
-GLsizeiptr Shape::get_indices_size_bytes() {
-    return index_count * sizeof(GLushort);
-}
-GLsizeiptr Shape::get_stride_bytes() {
-    return num_floats_per_vertex * sizeof(GLfloat);
-}
-GLsizeiptr Shape::get_color_offset() { return (3) * sizeof(GLfloat); }
-GLsizeiptr Shape::get_normal_offset() { return (6) * sizeof(GLfloat); }
-
-const int NUM_FLOATS_PER_VERTEX = 9;
-
-Shape *ShapeGenerator::get_triangle() {
-    Shape *ret = new Shape();
-    ret->vertex_count = 3;
-    ret->index_count = 3;
-    ret->num_floats_per_vertex = 6;
-    GLfloat verts[] = {
-        0.0f,  1.0f,  -1.0f, // vertex1
-        1.0f,  0.0f,  0.0f,  // color1
-        1.0f,  -1.0f, 0.0f,  // vertex2
-        0.0f,  1.0f,  0.0f,  // color2
-        -1.0f, -1.0f, 0.0f,  // vertex3
-        0.0f,  0.0f,  1.0f   // color3
-    };
-    GLushort inds[] = {0, 1, 2};
-    ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
-    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
-    memcpy(ret->vertices, verts, ret->get_size_bytes());
-    memcpy(ret->indices, inds, ret->get_indices_size_bytes());
-    return ret;
-}
-Shape *ShapeGenerator::get_triangle2() {
-    Shape *ret = new Shape();
-    ret->vertex_count = 3;
-    ret->index_count = 3;
-    ret->num_floats_per_vertex = 6;
-    GLfloat verts[] = {
-        -1.0f, 1.0f,  0.0f,  // vertex1
-        1.0f,  0.0f,  0.0f,  // color1
-        1.0f,  1.0f,  0.0f,  // vertex2
-        0.0f,  1.0f,  0.0f,  // color2
-        0.0f,  -1.0f, -1.0f, // vertex3
-        0.0f,  0.0f,  1.0f   // color3
-    };
-    GLushort inds[] = {0, 1, 2};
-    ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
-    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
-    memcpy(ret->vertices, verts, ret->get_size_bytes());
-    memcpy(ret->indices, inds, ret->get_indices_size_bytes());
-    return ret;
-}
-
-Shape *ShapeGenerator::get_cube() {
-    Shape *ret = new Shape();
-    ret->vertex_count = 24;
-    ret->index_count = 36;
-    ret->num_floats_per_vertex = NUM_FLOATS_PER_VERTEX;
-    GLfloat verts[] = {
-        1.0,       1.0,  1.0,  // top face
-        /**/ 1.0,  1.0,  0.0,  //
-        /**/ 0.0,  0.0,  1.0,  //
-        -1.0,      1.0,  1.0,  //
-        /**/ 1.0,  0.0,  1.0,  //
-        /**/ 0.0,  0.0,  1.0,  //
-        -1.0,      -1.0, 1.0,  //
-        /**/ 0.0,  0.0,  1.0,  //
-        /**/ 0.0,  0.0,  1.0,  //
-        1.0,       -1.0, 1.0,  //
-        /**/ 1.0,  0.0,  0.0,  //
-        /**/ 0.0,  0.0,  1.0,  //
-        1.0,       1.0,  -1.0, // bottom face
-        /**/ 0.0,  1.0,  1.0,  //
-        /**/ 0.0,  0.0,  -1.0, //
-        -1.0,      1.0,  -1.0, //
-        /**/ 0.0,  1.0,  0.0,  //
-        /**/ 0.0,  0.0,  -1.0, //
-        -1.0,      -1.0, -1.0, //
-        /**/ 0.0,  1.0,  0.5,  //
-        /**/ 0.0,  0.0,  -1.0, //
-        1.0,       -1.0, -1.0, //
-        /**/ 0.5,  1.0,  0.5,  //
-        /**/ 0.0,  0.0,  -1.0, //
-        1.0,       1.0,  1.0,  // right face
-        /**/ 1.0,  0.0,  0.5,  //
-        /**/ 1.0,  0.0,  0.0,  //
-        1.0,       -1.0, 1.0,  //
-        /**/ 1.0,  0.0,  1.0,  //
-        /**/ 1.0,  0.0,  0.0,  //
-        1.0,       -1.0, -1.0, //
-        /**/ 0.0,  0.0,  1.0,  //
-        /**/ 1.0,  0.0,  0.0,  //
-        1.0,       1.0,  -1.0, //
-        /**/ 0.0,  0.5,  1.0,  //
-        /**/ 1.0,  0.0,  0.0,  //
-        -1.0,      1.0,  1.0,  // left face
-        /**/ 1.0,  0.5,  1.0,  //
-        /**/ -1.0, 0.0,  0.0,  //
-        -1.0,      -1.0, 1.0,  //
-        /**/ 1.0,  0.5,  0.5,  //
-        /**/ -1.0, 0.0,  0.0,  //
-        -1.0,      -1.0, -1.0, //
-        /**/ 0.5,  0.5,  0.5,  //
-        /**/ -1.0, 0.0,  0.0,  //
-        -1.0,      1.0,  -1.0, //
-        /**/ 0.5,  1.0,  0.5,  //
-        /**/ -1.0, 0.0,  0.0,  //
-        1.0,       1.0,  1.0,  // front face
-        /**/ 0.5,  1.0,  1.0,  //
-        /**/ 0.0,  1.0,  0.0,  //
-        -1.0,      1.0,  1.0,  //
-        /**/ 0.0,  0.0,  1.0,  //
-        /**/ 0.0,  1.0,  0.0,  //
-        -1.0,      1.0,  -1.0, //
-        /**/ 0.0,  1.0,  0.0,  //
-        /**/ 0.0,  1.0,  0.0,  //
-        1.0,       1.0,  -1.0, //
-        /**/ 1.0,  1.0,  0.0,  //
-        /**/ 0.0,  1.0,  0.0,  //
-        1.0,       -1.0, 1.0,  // back face
-        /**/ 1.0,  0.0,  0.0,  //
-        /**/ 0.0,  -1.0, 0.0,  //
-        -1.0,      -1.0, 1.0,  //
-        /**/ 1.0,  0.0,  1.0,  //
-        /**/ 0.0,  -1.0, 0.0,  //
-        -1.0,      -1.0, -1.0, //
-        /**/ 1.0,  1.0,  0.0,  //
-        /**/ 0.0,  -1.0, 0.0,  //
-        1.0,       -1.0, -1.0, //
-        /**/ 0.0,  1.0,  0.0,  //
-        /**/ 0.0,  -1.0, 0.0,  //
-    };
-    GLushort inds[] = {
-        0,  1,  2,  2,  3,  0,  //
-        4,  6,  5,  6,  4,  7,  //
-        8,  9,  10, 10, 11, 8,  //
-        12, 14, 13, 14, 12, 15, //
-        16, 18, 17, 18, 16, 19, //
-        20, 21, 22, 22, 23, 20  //
-    };
-    ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
-    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
-    memcpy(ret->vertices, verts, ret->get_size_bytes());
-    memcpy(ret->indices, inds, ret->get_indices_size_bytes());
-    return ret;
-}
-
-Shape *ShapeGenerator::get_sphere(int num_verts_in_circle, int num_circles) {
-    Shape *ret = new Shape();
-    ret->vertex_count = 2 + num_verts_in_circle * num_circles;
-    ret->index_count = (num_circles - 1) * num_verts_in_circle * 6 +
-                       2 * num_verts_in_circle * 3;
-    ret->num_floats_per_vertex = NUM_FLOATS_PER_VERTEX;
-    // GLfloat verts[] = {
-    //     -1.0f, 1.0f,  0.0f,  // vertex1
-    //     1.0f,  0.0f,  0.0f,  // color1
-    //     1.0f,  1.0f,  0.0f,  // vertex2
-    //     0.0f,  1.0f,  0.0f,  // color2
-    //     0.0f,  -1.0f, -1.0f, // vertex3
-    //     0.0f,  0.0f,  1.0f   // color3
-    // };
-    // GLushort inds[] = {0, 1, 2};
-    std::vector<GLfloat> verts;
-    std::vector<GLushort> inds;
-    float angle = -glm::half_pi<float>();
-    for (int i = 0; i < num_circles; i++) {
-        glm::vec4 vert(1.0f, 0.0f, 0.0f, 0.0f);
-        angle += glm::pi<float>() / (float)(num_circles + 1);
-        auto rotate_mat = glm::rotate(glm::mat4(1), angle, {0.0f, 0.0f, 1.0f});
-        vert = rotate_mat * vert;
-        float y_angle = 0.0f;
-        for (int j = 0; j < num_verts_in_circle; j++) {
-            auto rotate_mat_y =
-                glm::rotate(glm::mat4(1), y_angle, {0.0f, 1.0f, 0.0f});
-            auto new_vert = rotate_mat_y * vert;
-            // position
-            verts.push_back(new_vert.x);
-            verts.push_back(new_vert.y);
-            verts.push_back(new_vert.z);
-
-            // color
-            verts.push_back(1.0);
-            verts.push_back(1.0);
-            verts.push_back(1.0);
-
-            // normal
-            verts.push_back(new_vert.x);
-            verts.push_back(new_vert.y);
-            verts.push_back(new_vert.z);
-
-            y_angle += glm::two_pi<float>() / (float)num_verts_in_circle;
-        }
-    }
-    // top vertex
-    verts.push_back(0.0);
-    verts.push_back(1.0);
-    verts.push_back(0.0);
-
-    verts.push_back(1.0);
-    verts.push_back(1.0);
-    verts.push_back(1.0);
-
-    verts.push_back(0.0);
-    verts.push_back(1.0);
-    verts.push_back(0.0);
-
-    // bottom vertex
-    verts.push_back(0.0);
-    verts.push_back(-1.0);
-    verts.push_back(0.0);
-
-    verts.push_back(1.0);
-    verts.push_back(1.0);
-    verts.push_back(1.0);
-
-    verts.push_back(0.0);
-    verts.push_back(-1.0);
-    verts.push_back(0.0);
-
-    for (int circle_ind = 0; circle_ind < num_circles - 1; circle_ind++) {
-        for (int vert_ind = 0; vert_ind < num_verts_in_circle; vert_ind++) {
-            int actual_vert_ind1 = circle_ind * num_verts_in_circle + vert_ind;
-            int actual_vert_ind2 = circle_ind * num_verts_in_circle +
-                                   (vert_ind + 1) % num_verts_in_circle;
-            int actual_vert_ind3 = (circle_ind + 1) * num_verts_in_circle +
-                                   (vert_ind + 1) % num_verts_in_circle;
-            int actual_vert_ind4 =
-                (circle_ind + 1) * num_verts_in_circle + vert_ind;
-            inds.push_back(actual_vert_ind1);
-            inds.push_back(actual_vert_ind2);
-            inds.push_back(actual_vert_ind3);
-            inds.push_back(actual_vert_ind1);
-            inds.push_back(actual_vert_ind3);
-            inds.push_back(actual_vert_ind4);
-        }
-    }
-    for (int vert_ind = 0; vert_ind < num_verts_in_circle; vert_ind++) {
-        int top_vert_ind = num_verts_in_circle * num_circles;
-        int actual_vert_ind_top1 =
-            (num_circles - 1) * num_verts_in_circle + vert_ind;
-        int actual_vert_ind_top2 = (num_circles - 1) * num_verts_in_circle +
-                                   (vert_ind + 1) % num_verts_in_circle;
-        inds.push_back(actual_vert_ind_top1);
-        inds.push_back(actual_vert_ind_top2);
-        inds.push_back(top_vert_ind);
-
-        int bottom_vert_ind = num_verts_in_circle * num_circles + 1;
-        int actual_vert_ind_bottom1 = vert_ind;
-        int actual_vert_ind_bottom2 = (vert_ind + 1) % num_verts_in_circle;
-        inds.push_back(actual_vert_ind_bottom2);
-        inds.push_back(actual_vert_ind_bottom1);
-        inds.push_back(bottom_vert_ind);
-    }
-    assert(verts.size() == ret->vertex_count * NUM_FLOATS_PER_VERTEX);
-    assert(inds.size() == ret->index_count);
-    ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
-    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
-    memcpy(ret->vertices, verts.data(), ret->get_size_bytes());
-    memcpy(ret->indices, inds.data(), ret->get_indices_size_bytes());
-    return ret;
-}
-
-ShapeOnGPU ShapeRenderer::add_shape(Shape *shape) {
-    ShapeOnGPU ret;
-    ret.offset_vertices = tot_offset_vertices;
-    ret.num_vertices = shape->vertex_count;
-    ret.offset_indices = tot_offset_indices;
-    ret.num_indices = shape->index_count;
-
-    shapes.push_back(shape);
-    shapes_on_gpu.push_back(ret);
-    tot_offset_vertices += shape->vertex_count;
-    tot_offset_indices += shape->index_count;
-
-    return ret;
-}
-void ShapeRenderer::send_shapes() {
-    if (sent_already) {
-        std::cerr << "Cannot send shapes twice! Please add all shapes "
-                     "before sending"
-                  << std::endl;
-        exit(1);
-    }
-    sent_already = true;
-    if (!shapes.size())
-        return;
-    glGenVertexArrays(1, &vertexArrayObject);
-    glBindVertexArray(vertexArrayObject);
-
-    Shape *combined_shape = new Shape();
-    combined_shape->num_floats_per_vertex = shapes[0]->num_floats_per_vertex;
-    combined_shape->vertex_count = tot_offset_vertices;
-    combined_shape->vertices =
-        (GLfloat *)malloc(combined_shape->get_size_bytes());
-    combined_shape->index_count = tot_offset_indices;
-    combined_shape->indices =
-        (GLushort *)malloc(combined_shape->get_indices_size_bytes());
-
-    int tot_byte_offset_vertices = 0;
-    int tot_num_indices = 0;
-    int tot_num_vertices = 0;
-    for (Shape *shape : shapes) {
-        memcpy((char *)((uint64_t)combined_shape->vertices +
-                        (uint64_t)tot_byte_offset_vertices),
-               shape->vertices, shape->get_size_bytes());
-
-        for (int i = 0; i < shape->index_count; i++) {
-            combined_shape->indices[tot_num_indices + i] =
-                tot_num_vertices + shape->indices[i];
-        }
-
-        tot_byte_offset_vertices += shape->get_size_bytes();
-        tot_num_indices += shape->index_count;
-        tot_num_vertices += shape->vertex_count;
-    }
-    // for (int i = 0; i < 6; i++) {
-    //     std::cout << combined_shape->indices[i] << std::endl;
-    // }
-
-    // generate array buffer and send vertex data
-    glGenBuffers(1, &myBufferID);
-    glBindBuffer(GL_ARRAY_BUFFER, myBufferID);
-    glBufferData(GL_ARRAY_BUFFER, combined_shape->get_size_bytes(),
-                 combined_shape->vertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE,
-                          combined_shape->get_stride_bytes(), 0);
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE,
-                          combined_shape->get_stride_bytes(),
-                          (void *)(combined_shape->get_color_offset()));
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,
-                          combined_shape->get_stride_bytes(),
-                          (void *)(combined_shape->get_normal_offset()));
-
-    // generate element array buffer and send index data
-    glGenBuffers(1, &myElementBufferID);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, myElementBufferID);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 combined_shape->get_indices_size_bytes(),
-                 combined_shape->indices, GL_STATIC_DRAW);
-}
-void ShapeRenderer::render_shape(ShapeOnGPU shape_gpu) {
-    // glDrawArrays(GL_TRIANGLES, shape_gpu.offset_vertices,
-    //              shape_gpu.num_vertices);
-    glDrawElements(GL_TRIANGLES, shape_gpu.num_indices, GL_UNSIGNED_SHORT,
-                   (void *)(shape_gpu.offset_indices * sizeof(GLushort)));
-}
-
-Camera::Camera() {
-    position = glm::vec3(0, 0, 0);
-    up = glm::vec3(0, 1, 0);
-    front = glm::vec3(0, 0, -1);
-    fov = glm::pi<float>() / 3;
-    right = glm::cross(front, up);
-}
-
-Camera::Camera(std::string vertex_shader_src_file_name,
-               std::string fragment_shader_src_file_name)
-    : Camera() {
-    std::ifstream vertexShaderFile(vertex_shader_src_file_name);
-    if (!vertexShaderFile.is_open()) {
-        std::cerr << "Error: Unable to open vertex shader file" << std::endl;
-    }
-    std::string vertexShaderSrc(
-        (std::istreambuf_iterator<char>(vertexShaderFile)),
-        std::istreambuf_iterator<char>());
-    std::ifstream fragmentShaderFile(fragment_shader_src_file_name);
-    if (!fragmentShaderFile.is_open()) {
-        std::cerr << "Error: Unable to open fragment shader file" << std::endl;
-    }
-    std::string fragmentShaderSrc(
-        (std::istreambuf_iterator<char>(fragmentShaderFile)),
-        std::istreambuf_iterator<char>());
-
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    const char *vertex_src = vertexShaderSrc.c_str();
-    glShaderSource(vertexShader, 1, &vertex_src, 0);
-    glCompileShader(vertexShader);
-
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    const char *fragment_src = fragmentShaderSrc.c_str();
-    glShaderSource(fragmentShader, 1, &fragment_src, 0);
-    glCompileShader(fragmentShader);
-
-    GLint compileStatus;
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &compileStatus);
-    if (compileStatus != GL_TRUE) {
-        GLint infoLength;
-        glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &infoLength);
-        GLchar *buffer = new GLchar[infoLength];
-
-        GLsizei bufferSize;
-        glGetShaderInfoLog(vertexShader, infoLength, &bufferSize, buffer);
-        std::cerr << buffer << std::endl;
-        delete[] buffer;
-    }
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &compileStatus);
-    if (compileStatus != GL_TRUE) {
-        GLint infoLength;
-        glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &infoLength);
-        GLchar *buffer = new GLchar[infoLength];
-
-        GLsizei bufferSize;
-        glGetShaderInfoLog(fragmentShader, infoLength, &bufferSize, buffer);
-        std::cerr << buffer << std::endl;
-        delete[] buffer;
-    }
-
-    GLuint programObject = glCreateProgram();
-
-    glAttachShader(programObject, vertexShader);
-    glAttachShader(programObject, fragmentShader);
-    glLinkProgram(programObject);
-    glValidateProgram(programObject);
-
-    glEnable(GL_DEPTH_TEST);
-    // glDisable(GL_CULL_FACE);
-    glEnable(GL_CULL_FACE);
-    glUseProgram(programObject);
-
-    full_transform_matrix_location =
-        glGetUniformLocation(programObject, "fullTransformMatrix");
-    light_direction_uniform_location =
-        glGetUniformLocation(programObject, "lightDirection");
-}
-glm::mat4 Camera::get_world_to_perspective_transform_matrix() {
-    glm::vec3 looking_vector =
-        glm::vec3(glm::rotate(glm::mat4(1), looking_angle, right) *
-                  glm::vec4(front, 1.0));
-    return glm::perspective(fov, get_global_aspect_ratio(), near_plane,
-                            far_plane) *
-           glm::lookAt(position, position + looking_vector, up);
-}
-void Camera::rotate_left_right(float angle) {
-    front =
-        glm::vec3(glm::rotate(glm::mat4(1), angle, up) * glm::vec4(front, 1.0));
-    right = glm::cross(front, up);
-}
-void Camera::rotate_up_down(float angle) {
-    looking_angle += angle;
-    looking_angle = glm::clamp(looking_angle, -glm::half_pi<float>() + 0.00001f,
-                               glm::half_pi<float>() - 0.00001f);
-}
-void Camera::move_front(float distance) { position += front * distance; }
-void Camera::strafe(float distance) { position += right * distance; }
-void Camera::move_up(float distance) { position += up * distance; }
-void Camera::track_input(Keys keys, MouseState mouse_state, float dt) {
-    float distance = movement_speed * dt;
-    if (keys[K_ctrl]) {
-        distance *= 3;
-    }
-    if (keys[K_w]) {
-        move_front(distance);
-    }
-    if (keys[K_s]) {
-        move_front(-distance);
-    }
-    if (keys[K_a]) {
-        strafe(-distance);
-    }
-    if (keys[K_d]) {
-        strafe(distance);
-    }
-    if (keys[K_shift]) {
-        move_up(-distance);
-    }
-    if (keys[K_space]) {
-        move_up(distance);
-    }
-    if (minecraft_rotation) {
-        rotate_left_right(-(mouse_state.x - prev_mouse_state.x) * 2.0 /
-                          global_width);
-        rotate_up_down(-(mouse_state.y - prev_mouse_state.y) * 2.0 /
-                       global_width);
-        SDL_WarpMouseInWindow(global_window, global_width / 2,
-                              global_height / 2);
-        prev_mouse_state.x = global_width / 2;
-        prev_mouse_state.y = global_height / 2;
-    } else {
-        if (mouse_state.pressed_left()) {
-            rotate_left_right((mouse_state.x - prev_mouse_state.x) * 2.0 /
-                              global_width);
-            rotate_up_down((mouse_state.y - prev_mouse_state.y) * 2.0 /
-                           global_width);
-        }
-        prev_mouse_state = mouse_state;
-    }
-}
-void Camera::toggle_minecraft_rotation() {
-    if (!minecraft_rotation) {
-        minecraft_rotation = true;
-        SDL_ShowCursor(SDL_DISABLE);
-    } else {
-        minecraft_rotation = false;
-        SDL_ShowCursor(SDL_ENABLE);
-    }
-}
-void Camera::draw_shape(glm::mat4 model_transform_matrix,
-                        ShapeOnGPU shape_gpu) {
-    glm::mat4 full_transform_matrix =
-        get_world_to_perspective_transform_matrix() * model_transform_matrix;
-    glm::vec3 light_direction(1.0f, 3.0f, 2.0f);
-    light_direction = glm::normalize(light_direction);
-    glUniformMatrix4fv(full_transform_matrix_location, 1, GL_FALSE,
-                       &full_transform_matrix[0][0]);
-    glUniform3fv(light_direction_uniform_location, 1, &light_direction[0]);
-    ShapeRenderer::render_shape(shape_gpu);
-}
-
-Object::Object(ShapeOnGPU shape_on_gpu) {
-    this->shape_on_gpu = shape_on_gpu;
-    position = glm::vec3(0.0f, 0.0f, -3.0f);
-}
-glm::mat4 Object::get_model_to_world_transform_matrix() {
-    glm::mat4 translation_matrix = glm::translate(glm::mat4(1.0f), position);
-    return translation_matrix;
-}
-void Object::draw(Camera &camera) {
-    camera.draw_shape(get_model_to_world_transform_matrix(),
-                      this->shape_on_gpu);
-}
-
-Button::Button(SDL_Rect rect, std::string text, int font_size, Color color,
-               Color hover_color, Color click_color, void (*on_click)(void *),
-               void *arg, Color text_color) {
-    this->text = text;
-    this->pos = {(float)rect.x, (float)rect.y};
-    width = rect.w;
-    height = rect.h;
-    this->color = color;
-    this->default_color = color;
-    this->hover_color = hover_color;
-    this->click_color = click_color;
-    is_colliding = false;
-    clicked = false;
-    this->on_click = on_click;
-    this->arg = arg;
-    font = TTF_OpenFont(DEFAULT_FONT, font_size);
-    this->text_color = text_color;
-}
-void Button::draw(CYScreen screen) {
-    fill_rect(rect, screen, color);
-    if (text.size())
-        draw_centered_text(screen, font, text,
-                           pos + Pos2D{width / 2, height / 2}, text_color);
-}
-Button::Button() {}
-void Button::update(MouseState mouse_state) {
-    rect = {(int)pos.x, (int)pos.y, (int)width, (int)height};
-    if (collide_rect(rect, {(float)mouse_state.x, (float)mouse_state.y})) {
-        if (mouse_state.pressed_left()) {
-            if (!clicked && is_colliding) {
-                // std::cout << "ff\n";
-                if (on_click) {
-                    // std::cout << "nice but wtf\n";
-                    on_click(arg);
-                }
-                color = click_color;
-            } else
-                color = click_color;
-        } else
-            color = hover_color;
-        is_colliding = true;
-
-    } else {
-        color = default_color;
-        is_colliding = false;
-    }
-    clicked = mouse_state.pressed_left();
-}
-
-InputBox::InputBox(SDL_Rect rect, std::string text, int font_size, Color color,
-                   Color hover_color, Color click_color, Color text_color,
-                   int max_len) {
-    this->text = text;
-    this->pos = {(float)rect.x, (float)rect.y};
-    width = rect.w;
-    height = rect.h;
-    this->color = color;
-    this->default_color = color;
-    this->hover_color = hover_color;
-    this->click_color = click_color;
-    is_colliding = false;
-    clicked = false;
-    font = TTF_OpenFont(DEFAULT_FONT, font_size);
-    this->text_color = text_color;
-    this->is_in_focus = false;
-    this->max_len = max_len;
-    this->font_size = font_size;
-    is_cursor_visible = false;
-}
-void InputBox::draw(CYScreen screen) {
-    int border_width = 2;
-    if (is_in_focus)
-        fill_rect({rect.x - border_width, rect.y - border_width,
-                   rect.w + 2 * border_width, rect.h + 2 * border_width},
-                  screen, click_color);
-    fill_rect(rect, screen, color);
-    int text_width = 0;
-    if (text.size())
-        text_width = draw_centered_text(
-            screen, font, text, pos + Pos2D{width / 2, height / 2}, text_color);
-    if (is_cursor_visible)
-        fill_rect({rect.x + rect.w / 2 + text_width / 2 + 2,
-                   rect.y + rect.h / 2 - (font_size * 2) / 3, 4,
-                   (font_size * 4) / 3},
-                  screen, text_color);
-}
-// as long as you have called the handle_event macro previously, you should
-// just be able to pass _events without defining it. Otherwise, figure it
-// out yourself or call the damn macro
-void InputBox::update(MouseState mouse_state, std::vector<SDL_Event> _events,
-                      Keys keys) {
-    is_cursor_visible = is_in_focus && (SDL_GetTicks() % 1000 < 500);
-    rect = {(int)pos.x, (int)pos.y, (int)width, (int)height};
-    if (collide_rect(rect, {(float)mouse_state.x, (float)mouse_state.y})) {
-        if (mouse_state.pressed_left()) {
-            if (!clicked && is_colliding) {
-                // clicked on
-                is_in_focus = true;
-                color = click_color;
-            } else
-                color = click_color;
-        } else
-            color = hover_color;
-        is_colliding = true;
-
-    } else {
-        if (mouse_state.pressed_left()) {
-            if (!clicked) {
-                // clicked off
-                is_in_focus = false;
-            }
-        }
-        color = default_color;
-        is_colliding = false;
-    }
-    clicked = mouse_state.pressed_left();
-
-    if (is_in_focus) {
-        for (auto event : _events) {
-            switch (event.type) {
-            case SDL_TEXTINPUT:
-                // std::cout << event.text.text << std::endl;
-                if (text.size() < max_len)
-                    text.push_back(event.text.text[0]);
-                break;
-            case KEYDOWN:
-                switch (event.key.keysym.scancode) {
-                case SDL_SCANCODE_BACKSPACE:
-                    if (text.size() > 0)
-                        text.pop_back();
-                    if (keys[SDL_SCANCODE_LCTRL]) {
-                        while (text.size() && text.back() != ' ') {
-                            text.pop_back();
-                        }
-                    }
-                    break;
-                case SDL_SCANCODE_RETURN:
-                case SDL_SCANCODE_ESCAPE:
-                    is_in_focus = false;
-                default:
-                    break;
-                }
-                break;
-            default:
-                break;
-            }
-        }
-    }
-}
-
-Slider::Slider(Pos2D start, Pos2D end, float max_value, Color track_color,
-               Color bob_color, float value) {
-    this->start = start;
-    this->end = end;
-    this->max_value = max_value;
-    this->value = value;
-    this->track_color = track_color;
-    this->bob_color = bob_color;
-    bob_pos = start;
-    is_selected = false;
-}
-void Slider::draw(CYScreen screen) {
-    draw_line(screen, start, end, track_color, 5);
-    draw_aa_circle(screen, bob_pos, 12, bob_color);
-}
-void Slider::update(MouseState mouse_state) {
-    bob_pos = ((end - start) * value) / max_value + start;
-    if (mouse_state.pressed_left()) {
-        if ((mouse_state.position() - bob_pos).norm() <= 12) {
-            is_selected = true;
-        }
-        // std::cout << "slider!!\n";
-        if (is_selected) {
-            Pos2D dir = end - start;
-            if (abs(dir.x) > abs(dir.y))
-                value =
-                    max_value * (mouse_state.x - start.x) / (end.x - start.x);
-            else
-                value =
-                    max_value * (mouse_state.y - start.y) / (end.y - start.y);
-            if (value > max_value)
-                value = max_value;
-            if (value < 0)
-                value = 0;
-        }
-    } else
-        is_selected = false;
-}
-
-StaticText::StaticText(Pos2D pos, std::string text, int font_size,
-                       Color text_color, CYScreen screen,
-                       bool centered_horizontal, bool centered_vertical,
-                       bool has_background, Color background_color) {
-    this->pos = pos;
-    this->text = text;
-    this->color = background_color;
-    this->text_color = text_color;
-    this->font_size = font_size;
-    this->screen = screen;
-    font = TTF_OpenFont(DEFAULT_FONT, font_size);
-    text_surface = TTF_RenderText_Solid(font, text.c_str(), color);
-    text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
-    pos_rect = {(int)(pos.x - (text_surface->w / 2) * centered_horizontal),
-                (int)(pos.y - (text_surface->h / 2) * centered_vertical),
-                text_surface->w, text_surface->h};
-}
-StaticText::~StaticText() {
-    SDL_FreeSurface(text_surface);
-    SDL_DestroyTexture(text_texture);
-}
-
-void StaticText::change_font_size(int font_size) {
-    this->font_size = font_size;
-    font = TTF_OpenFont(DEFAULT_FONT, font_size);
-}
-
-void StaticText::set_text(std::string new_text) {
-    text = new_text;
-    re_render();
-}
-// re-initialises the rendered font. Call this when you change the text,
-// color or position
-void StaticText::re_render() {
-    SDL_FreeSurface(text_surface);
-    SDL_DestroyTexture(text_texture);
-    text_surface = TTF_RenderText_Solid(font, text.c_str(), color);
-    text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
-    pos_rect = {(int)(pos.x - text_surface->w / 2),
-                (int)(pos.y - text_surface->h / 2), text_surface->w,
-                text_surface->h};
-}
-void StaticText::draw() {
-    SDL_RenderCopy(screen, text_texture, NULL, &pos_rect);
-}
-
-void _select(void *arg) {
-    selector_args *s = (selector_args *)arg;
-    s->selector->selected = s->selected;
-    s->selector->is_dropped_down = false;
-}
-
-Selector::Selector(SDL_Rect rect, int font_size,
-                   std::vector<std::string> options, Color color,
-                   Color hover_color, Color click_color) {
-    this->rect = rect;
-    this->font = TTF_OpenFont(DEFAULT_FONT, font_size);
-    this->options = options;
-    this->default_color = color;
-    this->color = color;
-    this->hover_color = hover_color;
-    this->click_color = click_color;
-    args = std::vector<selector_args>(options.size());
-    original_button = Button(rect, "defalult!", font_size, color, hover_color,
-                             click_color, NULL);
-    for (int i = 0; i < options.size(); i++) {
-        args[i] = {this, i};
-        Button new_button =
-            Button({rect.x, rect.y + (i + 1) * rect.h, rect.w, rect.h},
-                   options[i], font_size, color, hover_color, click_color,
-                   _select, (void *)(&args[i]));
-        buttons.push_back(new_button);
-    }
-    this->is_dropped_down = false;
-    this->selected = 0;
-}
-void Selector::draw(CYScreen screen) {
-    original_button.draw(screen);
-    Pos2D arrow_center = {rect.x + rect.w - rect.h / 3.0f,
-                          rect.y + rect.h / 2.0f};
-    if (is_dropped_down) {
-        for (int i = 0; i < options.size(); i++) {
-            buttons[i].draw(screen);
-        }
-        draw_polygon(screen,
-                     {arrow_center + Pos2D{0., -4.},
-                      arrow_center + Pos2D{6., 4.},
-                      arrow_center + Pos2D{-6., 4.}},
-                     {50, 50, 50, 255});
-    } else {
-        draw_polygon(screen,
-                     {arrow_center + Pos2D{0., 4.},
-                      arrow_center + Pos2D{6., -4.},
-                      arrow_center + Pos2D{-6., -4.}},
-                     {50, 50, 50, 255});
-    }
-}
-
-void Selector::update(MouseState mouse_state) {
-    original_button.update(mouse_state);
-    if (mouse_state.pressed_left() &&
-        !collide_rect(
-            {rect.x, rect.y, rect.w, (int)(options.size() + 1) * rect.h},
-            {(float)mouse_state.x, (float)mouse_state.y})) {
-        is_dropped_down = false;
-    }
-    if (original_button.clicked && original_button.is_colliding)
-        is_dropped_down = true;
-
-    if (is_dropped_down) {
-        for (int i = 0; i < options.size(); i++) {
-            buttons[i].update(mouse_state);
-        }
-    }
-    original_button.text = options[selected];
 }
