@@ -271,7 +271,7 @@ struct Material {
 void read_material_file(std::string filename,
                         std::map<std::string, Material> &material_lib) {
     std::cout << "Material File name: " << filename << std::endl;
-    std::ifstream inp_file("models/" + filename);
+    std::ifstream inp_file(filename);
     std::string curr_material_name;
     std::string line;
     while (getline(inp_file, line)) {
@@ -313,7 +313,11 @@ Shape *ShapeGenerator::get_from_file(std::string filename) {
         if (linetype == "mtllib") {
             std::string material_lib_file_name;
             line_stream >> material_lib_file_name;
-            read_material_file(material_lib_file_name, materials);
+            std::string rel_dir = filename;
+            while (rel_dir.size() && rel_dir.back() != '/') {
+                rel_dir.pop_back();
+            }
+            read_material_file(rel_dir + material_lib_file_name, materials);
         } else if (linetype == "v") {
             float x, y, z;
             line_stream >> x >> y >> z;
