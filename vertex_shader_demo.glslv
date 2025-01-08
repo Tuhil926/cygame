@@ -4,6 +4,7 @@ in layout(location = 1) vec3 color;
 in layout(location = 2) vec3 normal;
 
 uniform mat4 fullTransformMatrix;
+uniform mat4 rotationMatrix;
 
 out vec3 theColor;
 out vec3 theNormal;
@@ -13,5 +14,6 @@ void main()
     vec4 newPosition = fullTransformMatrix*v;
     gl_Position = newPosition;
     theColor = color;
-    theNormal = normal;
+    theNormal = vec3(rotationMatrix * vec4(normal, 0.0));
+    // theNormal = vec3(1, 1, 1);
 }

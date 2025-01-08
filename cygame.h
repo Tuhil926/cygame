@@ -237,6 +237,7 @@ class Camera {
     bool minecraft_rotation = false;
     GLuint full_transform_matrix_location;
     GLuint light_direction_uniform_location;
+    GLuint rotation_matrix_uniform_location;
     GLuint programObject;
     Camera();
     Camera(std::string vertex_shader_src_file_name,
@@ -249,17 +250,26 @@ class Camera {
     void move_up(float distance);
     void track_input(Keys keys, MouseState mouse_state, float dt);
     void toggle_minecraft_rotation();
-    void draw_shape(glm::mat4 full_transform_matrix, ShapeOnGPU shape_gpu);
+    // void draw_shape(glm::mat4 full_transform_matrix, ShapeOnGPU shape_gpu);
+    void draw_shape(glm::mat4 model_translation_matrix,
+                    glm::mat4 model_scale_matrix,
+                    glm::mat4 model_rotation_matrix, ShapeOnGPU shape_gpu);
 };
 
 class Object {
   public:
     ShapeOnGPU shape_on_gpu;
     glm::vec3 position;
-    glm::vec3 rotation;
+    glm::mat4 rotation;
     glm::vec3 scale;
     Object(ShapeOnGPU shape_on_gpu);
-    glm::mat4 get_model_to_world_transform_matrix();
+    // glm::mat4 get_model_to_world_transform_matrix();
+    glm::mat4 get_model_to_world_translation_matrix();
+    glm::mat4 get_model_to_world_scale_matrix();
+    glm::mat4 get_model_to_world_rotation_matrix();
+    void rotate_x(float angle);
+    void rotate_y(float angle);
+    void rotate_z(float angle);
     void draw(Camera &camera);
 };
 

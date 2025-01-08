@@ -44,6 +44,10 @@ int main() {
     plane_object.scale.y = 7;
     plane_object.scale.z = 7;
 
+    // plane_object.rotate_x(1.0);
+    plane_object.rotate_y(0.5);
+    plane_object.rotate_x(1.0);
+
     while (running) {
         // you need to use this handle_event macro if you want to be able to use
         // the input box. don't ask me why. It's just convenient and easier than
