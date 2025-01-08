@@ -1,4 +1,14 @@
 #include "cygame.h"
+#include "glad/glad.h"
+#include "glm/ext/vector_float3.hpp"
+#include <cassert>
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <ostream>
+#include <sstream>
+#include <string>
+#include <vector>
 
 Shape *ShapeGenerator::get_cube() {
     Shape *ret = new Shape();
@@ -249,5 +259,107 @@ Shape *ShapeGenerator::get_triangle2() {
     ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
     memcpy(ret->vertices, verts, ret->get_size_bytes());
     memcpy(ret->indices, inds, ret->get_indices_size_bytes());
+    return ret;
+}
+
+Shape *ShapeGenerator::get_from_file(std::string filename) {
+    Shape *ret = new Shape();
+    std::ifstream inp_file(filename);
+    std::vector<glm::vec3> obj_vertices;
+    std::vector<glm::vec3> obj_normals;
+    std::vector<GLfloat> verts;
+    std::vector<GLushort> indices;
+    int num_verts = 0;
+
+    std::string line;
+    while (getline(inp_file, line)) {
+        // std::cout << "line: " << line << std::endl;
+        std::stringstream line_stream(line);
+        std::string linetype;
+        line_stream >> linetype;
+        if (linetype[0] == '#')
+            continue;
+        if (linetype == "mtllib") {
+            std::string mtl_file_name;
+            line_stream >> mtl_file_name;
+        } else if (linetype == "v") {
+            float x, y, z;
+            line_stream >> x >> y >> z;
+            obj_vertices.push_back({x, y, z});
+        } else if (linetype == "vn") {
+            float x, y, z;
+            line_stream >> x >> y >> z;
+            obj_normals.push_back({x, y, z});
+        } else if (linetype == "vt") {
+            float x, y;
+            line_stream >> x >> y;
+        } else if (linetype == "f") {
+            std::vector<std::string> face_verts_str;
+            std::string face_vert_str;
+            while (getline(line_stream, face_vert_str, ' ')) {
+                // std::cout << "face vert: " << face_vert_str << std::endl;
+                face_verts_str.push_back(face_vert_str);
+            }
+            std::vector<std::vector<int>> face_verts;
+            for (std::string face_vert_str : face_verts_str) {
+                std::stringstream face_vert_str_stream(face_vert_str);
+                std::vector<int> indices;
+                std::string ind_str;
+                while (getline(face_vert_str_stream, ind_str, '/')) {
+                    int ind = std::stoi(ind_str);
+                    indices.push_back(ind);
+                }
+                if (indices.size() > 2)
+                    face_verts.push_back(indices);
+            }
+            if (face_verts.size() < 3) {
+                std::cout << "faces should have at least 3 vertices smh"
+                          << std::endl;
+            }
+            int first_vert_ind;
+            // std::cout << "size of obj vertices: " << obj_vertices.size()
+            //           << std::endl;
+            // std::cout << "size of normals: " << obj_normals.size() <<
+            // std::endl;
+            for (int i = 0; i < face_verts.size(); i++) {
+                // std::cout << "size of face_verts[i]: " <<
+                // face_verts[i].size()
+                //           << std::endl;
+                glm::vec3 vert = obj_vertices[face_verts[i][0] - 1];
+                glm::vec3 normal(1.0f, 1.0f, 1.0f);
+                glm::vec3 color(1.0f, 1.0f, 1.0f);
+                if (face_verts[i].size() > 2) {
+                    normal = obj_normals[face_verts[i][2] - 1];
+                }
+                verts.push_back(vert.x);
+                verts.push_back(vert.y);
+                verts.push_back(vert.z);
+                verts.push_back(color.x);
+                verts.push_back(color.y);
+                verts.push_back(color.z);
+                verts.push_back(normal.x);
+                verts.push_back(normal.y);
+                verts.push_back(normal.z);
+                num_verts++;
+                if (i == 0) {
+                    first_vert_ind = num_verts;
+                } else if (i < face_verts.size() - 1) {
+                    indices.push_back(first_vert_ind - 1);
+                    indices.push_back(num_verts - 1);
+                    indices.push_back(num_verts);
+                }
+            }
+        }
+    }
+    assert(num_verts * NUM_FLOATS_PER_VERTEX == verts.size());
+    ret->vertex_count = num_verts;
+    ret->index_count = indices.size();
+    ret->num_floats_per_vertex = NUM_FLOATS_PER_VERTEX;
+
+    ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
+    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
+    memcpy(ret->vertices, verts.data(), ret->get_size_bytes());
+    memcpy(ret->indices, indices.data(), ret->get_indices_size_bytes());
+
     return ret;
 }

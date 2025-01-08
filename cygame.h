@@ -185,6 +185,7 @@ class Shape {
     GLsizeiptr get_stride_bytes();
     GLsizeiptr get_color_offset();
     GLsizeiptr get_normal_offset();
+    void print_values();
 };
 
 class ShapeGenerator {
@@ -193,6 +194,7 @@ class ShapeGenerator {
     static Shape *get_triangle2();
     static Shape *get_cube();
     static Shape *get_sphere(int num_verts_in_circle, int num_circles);
+    static Shape *get_from_file(std::string filename);
 };
 
 class ShapeOnGPU {

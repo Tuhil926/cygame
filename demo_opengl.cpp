@@ -18,10 +18,37 @@ int main() {
     Shape *cube = ShapeGenerator::get_cube();
     Shape *sphere = ShapeGenerator::get_sphere(200, 100);
     // Shape *sphere = ShapeGenerator::get_cube();
+    Shape *monkey = ShapeGenerator::get_from_file("models/monkey.obj");
+    // for (int i = 0; i < monkey->vertex_count; i++) {
+    //     cout << "vert: " << monkey->vertices[NUM_FLOATS_PER_VERTEX * i +
+    //     0]
+    //          << ' ' << monkey->vertices[NUM_FLOATS_PER_VERTEX * i + 1] <<
+    //          ' '
+    //          << monkey->vertices[NUM_FLOATS_PER_VERTEX * i + 2] << endl;
+    //     cout << "colr: " << monkey->vertices[NUM_FLOATS_PER_VERTEX * i +
+    //     3]
+    //          << ' ' << monkey->vertices[NUM_FLOATS_PER_VERTEX * i + 4] <<
+    //          ' '
+    //          << monkey->vertices[NUM_FLOATS_PER_VERTEX * i + 5] << endl;
+    //     cout << "norm: " << monkey->vertices[NUM_FLOATS_PER_VERTEX * i +
+    //     6]
+    //          << ' ' << monkey->vertices[NUM_FLOATS_PER_VERTEX * i + 7] <<
+    //          ' '
+    //          << monkey->vertices[NUM_FLOATS_PER_VERTEX * i + 8] << endl;
+    //     cout << endl;
+    // }
+    // for (int i = 0; i < monkey->index_count; i++) {
+    //     cout << monkey->indices[i] << ' ';
+    //     if (i % 3 == 2)
+    //         cout << endl;
+    // }
+    // monkey->vertex_count = 4;
+    // monkey->index_count = 6;
 
     ShapeRenderer renderer;
     auto cube_gpu = renderer.add_shape(cube);
     auto sphere_gpu = renderer.add_shape(sphere);
+    auto monkey_gpu = renderer.add_shape(monkey);
 
     // creating the shader program
 
@@ -33,9 +60,11 @@ int main() {
     Object cube_object_2(cube_gpu);
     Object cube_object_3(cube_gpu);
     Object sphere_object(sphere_gpu);
+    Object monkey_object(monkey_gpu);
     cube_object_2.position.z = -7;
     cube_object_3.position.x = -7;
     sphere_object.position.z = -7;
+    monkey_object.position.x = 7;
 
     while (running) {
         // you need to use this handle_event macro if you want to be able to use
@@ -80,6 +109,7 @@ int main() {
 
         sphere_object.draw(camera);
         cube_object.draw(camera);
+        monkey_object.draw(camera);
         // cube_object_2.draw(camera);
         // cube_object_3.draw(camera);
 
