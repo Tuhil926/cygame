@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <ostream>
 #include <sstream>
 #include <string>
@@ -262,6 +263,34 @@ Shape *ShapeGenerator::get_triangle2() {
     return ret;
 }
 
+struct Material {
+    glm::vec3 color;
+    Material() { color = glm::vec3(1.0f, 1.0f, 1.0f); }
+} typedef Material;
+
+void read_material_file(std::string filename,
+                        std::map<std::string, Material> &material_lib) {
+    std::cout << "Material File name: " << filename << std::endl;
+    std::ifstream inp_file("models/" + filename);
+    std::string curr_material_name;
+    std::string line;
+    while (getline(inp_file, line)) {
+        // std::cout << "line: " << line << std::endl;
+        std::stringstream line_stream(line);
+        std::string linetype;
+        line_stream >> linetype;
+        if (linetype[0] == '#')
+            continue;
+        else if (linetype == "newmtl") {
+            line_stream >> curr_material_name;
+        } else if (linetype == "Kd") {
+            float r, g, b;
+            line_stream >> r >> g >> b;
+            material_lib[curr_material_name].color = glm::vec3(r, g, b);
+        }
+    }
+}
+
 Shape *ShapeGenerator::get_from_file(std::string filename) {
     Shape *ret = new Shape();
     std::ifstream inp_file(filename);
@@ -269,7 +298,9 @@ Shape *ShapeGenerator::get_from_file(std::string filename) {
     std::vector<glm::vec3> obj_normals;
     std::vector<GLfloat> verts;
     std::vector<GLushort> indices;
+    std::map<std::string, Material> materials;
     int num_verts = 0;
+    Material curr_material;
 
     std::string line;
     while (getline(inp_file, line)) {
@@ -280,8 +311,9 @@ Shape *ShapeGenerator::get_from_file(std::string filename) {
         if (linetype[0] == '#')
             continue;
         if (linetype == "mtllib") {
-            std::string mtl_file_name;
-            line_stream >> mtl_file_name;
+            std::string material_lib_file_name;
+            line_stream >> material_lib_file_name;
+            read_material_file(material_lib_file_name, materials);
         } else if (linetype == "v") {
             float x, y, z;
             line_stream >> x >> y >> z;
@@ -293,6 +325,15 @@ Shape *ShapeGenerator::get_from_file(std::string filename) {
         } else if (linetype == "vt") {
             float x, y;
             line_stream >> x >> y;
+        } else if (linetype == "usemtl") {
+            std::string material_name;
+            line_stream >> material_name;
+            if (!materials.count(material_name)) {
+                std::cout << "Could not find material: " << material_name
+                          << std::endl;
+                continue;
+            }
+            curr_material = materials[material_name];
         } else if (linetype == "f") {
             std::vector<std::string> face_verts_str;
             std::string face_vert_str;
@@ -327,7 +368,7 @@ Shape *ShapeGenerator::get_from_file(std::string filename) {
                 //           << std::endl;
                 glm::vec3 vert = obj_vertices[face_verts[i][0] - 1];
                 glm::vec3 normal(1.0f, 1.0f, 1.0f);
-                glm::vec3 color(1.0f, 1.0f, 1.0f);
+                glm::vec3 color = curr_material.color;
                 if (face_verts[i].size() > 2) {
                     normal = obj_normals[face_verts[i][2] - 1];
                 }
@@ -349,6 +390,8 @@ Shape *ShapeGenerator::get_from_file(std::string filename) {
                     indices.push_back(num_verts);
                 }
             }
+        } else {
+            // std::cout << "Line type: " << linetype << std::endl;
         }
     }
     assert(num_verts * NUM_FLOATS_PER_VERTEX == verts.size());
