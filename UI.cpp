@@ -1,4 +1,5 @@
 #include "cygame.h"
+#include <ostream>
 
 Button::Button(SDL_Rect rect, std::string text, int font_size, Color color,
                Color hover_color, Color click_color, void (*on_click)(void *),
@@ -201,7 +202,7 @@ StaticText::StaticText(Pos2D pos, std::string text, int font_size,
     this->screen = screen;
     font = TTF_OpenFont(DEFAULT_FONT, font_size);
     text_surface = TTF_RenderText_Solid(font, text.c_str(), color);
-    text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
+    // text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
     pos_rect = {(int)(pos.x - (text_surface->w / 2.0f) * centered_horizontal),
                 (int)(pos.y - (text_surface->h / 2.0f) * centered_vertical),
                 text_surface->w, text_surface->h};
@@ -226,12 +227,13 @@ void StaticText::re_render() {
     SDL_FreeSurface(text_surface);
     SDL_DestroyTexture(text_texture);
     text_surface = TTF_RenderText_Solid(font, text.c_str(), color);
-    text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
+    // text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
     pos_rect = {(int)(pos.x - text_surface->w / 2.0f),
                 (int)(pos.y - text_surface->h / 2.0f), text_surface->w,
                 text_surface->h};
 }
 void StaticText::draw() {
+    text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
     SDL_RenderCopy(screen, text_texture, NULL, &pos_rect);
 }
 

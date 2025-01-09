@@ -111,15 +111,6 @@ Shape *ShapeGenerator::get_sphere(int num_verts_in_circle, int num_circles) {
     ret->index_count = (num_circles - 1) * num_verts_in_circle * 6 +
                        2 * num_verts_in_circle * 3;
     ret->num_floats_per_vertex = NUM_FLOATS_PER_VERTEX;
-    // GLfloat verts[] = {
-    //     -1.0f, 1.0f,  0.0f,  // vertex1
-    //     1.0f,  0.0f,  0.0f,  // color1
-    //     1.0f,  1.0f,  0.0f,  // vertex2
-    //     0.0f,  1.0f,  0.0f,  // color2
-    //     0.0f,  -1.0f, -1.0f, // vertex3
-    //     0.0f,  0.0f,  1.0f   // color3
-    // };
-    // GLushort inds[] = {0, 1, 2};
     std::vector<GLfloat> verts;
     std::vector<GLushort> inds;
     float angle = -glm::half_pi<float>();

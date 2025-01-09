@@ -17,16 +17,19 @@ int cygame_init() {
     return 0;
 }
 SDL_Window *global_window;
+CYGLScreen global_gl_context = NULL;
 float global_width, global_height;
 
 SDL_Window *get_global_window() { return global_window; }
+CYGLScreen get_global_gl_context() { return global_gl_context; }
 float get_global_width() { return global_width; }
 float get_global_height() { return global_height; }
-void set_global_dimensions_to_window_width() {
+void set_global_dimensions_to_window_width(CYScreen screen) {
     int w, h;
     SDL_GetWindowSize(global_window, &w, &h);
     global_width = w;
     global_height = h;
+    SDL_RenderSetLogicalSize(screen, w, h);
 }
 
 /// @brief returns an SDL_Renderer in a window onto which all your subsequent
@@ -68,8 +71,8 @@ CYScreen make_screen(int width, int height, float gui_scale,
 /// by 1.5
 /// @param title
 /// @return CYGLScreen
-CYGLScreen make_opengl_screen(int width, int height, float gui_scale,
-                              const char *title) {
+CYScreen make_opengl_screen(int width, int height, float gui_scale,
+                            const char *title) {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,
@@ -84,7 +87,7 @@ CYGLScreen make_opengl_screen(int width, int height, float gui_scale,
 
     global_width = width;
     global_height = height;
-    CYGLScreen rend = SDL_GL_CreateContext(win);
+    global_gl_context = SDL_GL_CreateContext(win);
 
     int err = gladLoadGLLoader(SDL_GL_GetProcAddress);
     if (!err) {
@@ -103,6 +106,17 @@ CYGLScreen make_opengl_screen(int width, int height, float gui_scale,
                      "(glGetString(GL_SHADING_LANGUAGE_VERSION) returned 0)\n";
 
     // SDL_SetWindowFullscreen(win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+
+    Uint32 render_flags = SDL_RENDERER_ACCELERATED;
+
+    // creates a renderer to render our images
+    SDL_GL_MakeCurrent(global_window, NULL);
+    SDL_Renderer *rend = SDL_CreateRenderer(win, -1, render_flags);
+    SDL_RenderSetLogicalSize(rend, width, height);
+    global_width = width;
+    global_height = height;
+    // SDL_SetWindowFullscreen(win, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    SDL_GL_MakeCurrent(get_global_window(), get_global_gl_context());
 
     return rend;
 }
@@ -232,8 +246,11 @@ void draw_screen(CYScreen screen) {
     SDL_RenderPresent(screen);
 }
 
-void draw_opengl_screen() {
-    set_global_dimensions_to_window_width();
+void switch_to_2d_rendering() { SDL_GL_MakeCurrent(get_global_window(), NULL); }
+
+void draw_opengl_screen(CYScreen screen) {
+    set_global_dimensions_to_window_width(screen);
+    SDL_GL_MakeCurrent(get_global_window(), get_global_gl_context());
     glViewport(0, 0, get_global_width(), get_global_height());
     SDL_GL_SwapWindow(get_global_window());
 }

@@ -125,14 +125,15 @@ struct MouseState {
 int cygame_init();
 
 SDL_Window *get_global_window();
+CYGLScreen get_global_gl_context();
 float get_global_width();
 float get_global_height();
 void set_global_dimensions_to_window_width();
 
 CYScreen make_screen(int width, int height, float gui_scale = 1,
                      const char *title = "Game");
-CYGLScreen make_opengl_screen(int width, int height, float gui_scale,
-                              const char *title = "Opengl Game");
+CYScreen make_opengl_screen(int width, int height, float gui_scale,
+                            const char *title = "Opengl Game");
 
 void draw_rect(SDL_Rect rect, CYScreen screen, Color color);
 
@@ -154,7 +155,9 @@ void clear_opengl_screen(Color color);
 
 void draw_screen(CYScreen screen);
 
-void draw_opengl_screen();
+void switch_to_2d_rendering();
+
+void draw_opengl_screen(CYScreen screen);
 
 float get_global_aspect_ratio();
 

@@ -12,7 +12,7 @@ int main() {
     // initialises sdl.
     cygame_init();
 
-    make_opengl_screen(1000, 700, 1, "Cygame opengl demo!");
+    auto screen = make_opengl_screen(1000, 700, 1, "Cygame opengl demo!");
     bool running = true;
 
     Shape *cube = ShapeGenerator::get_cube();
@@ -33,11 +33,9 @@ int main() {
 
     Object cube_object(cube_gpu);
     Object cube_object_2(cube_gpu);
-    Object cube_object_3(cube_gpu);
     Object sphere_object(sphere_gpu);
     Object plane_object(plane_gpu);
     cube_object_2.position.z = -7;
-    cube_object_3.position.x = -7;
     sphere_object.position.z = -7;
     plane_object.position.x = 7;
     plane_object.scale.x = 7;
@@ -47,6 +45,13 @@ int main() {
     // plane_object.rotate_x(1.0);
     plane_object.rotate_y(0.5);
     plane_object.rotate_x(1.0);
+
+    Button button =
+        Button({700, 300, 150, 60}, "hello", 24, {190, 180, 70, 255},
+               {220, 210, 100, 255}, {255, 255, 150, 255}, NULL, NULL);
+    StaticText text = StaticText(
+        {100, 600}, "press w to toggle between mouse mode and camera mode", 20,
+        {100, 100, 255, 255}, screen, false);
 
     while (running) {
         // you need to use this handle_event macro if you want to be able to use
@@ -86,6 +91,9 @@ int main() {
         MouseState mouse_state = get_mouse_state();
 
         camera.track_input(keys, mouse_state, 1.0 / 60.0);
+        button.update(mouse_state);
+
+        // drawing things
 
         clear_opengl_screen({0, 0, 0, 0});
 
@@ -93,10 +101,18 @@ int main() {
         cube_object.draw(camera);
         plane_object.draw(camera);
         // cube_object_2.draw(camera);
-        // cube_object_3.draw(camera);
 
-        // just swaps the buffers
-        draw_opengl_screen();
+        // IMPORTANT: This function has to be called every frame before drawing
+        // anything in 2d. The rendering will be switched back to 3d when you
+        // call draw_opengl_screen
+        switch_to_2d_rendering();
+
+        button.draw(screen);
+        text.draw();
+
+        // switches to opengl shaders for 3d, sets the viewport size to window
+        // size and swaps the frame buffer to display what was drawn
+        draw_opengl_screen(screen);
 
         delay(1000 / 60);
     }
