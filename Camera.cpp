@@ -78,6 +78,10 @@ Camera::Camera(std::string vertex_shader_src_file_name,
         glGetUniformLocation(programObject, "lightDirection");
     rotation_matrix_uniform_location =
         glGetUniformLocation(programObject, "rotationMatrix");
+    camera_location_uniform_location =
+        glGetUniformLocation(programObject, "cameraLocation");
+    model_to_world_matrix_uniform_location =
+        glGetUniformLocation(programObject, "modelToWorldMatrix");
 }
 glm::mat4 Camera::get_world_to_perspective_transform_matrix() {
     glm::vec3 looking_vector =
@@ -157,12 +161,18 @@ void Camera::draw_shape(glm::mat4 model_translation_matrix,
     glm::mat4 full_transform_matrix =
         get_world_to_perspective_transform_matrix() * model_translation_matrix *
         model_rotation_matrix * model_scale_matrix;
+    glm::mat4 model_to_world_matrix =
+        model_translation_matrix * model_rotation_matrix * model_scale_matrix;
+    // glm::vec3 light_direction(1.0f, 3.0f, 2.0f);
     glm::vec3 light_direction(1.0f, 3.0f, 2.0f);
     light_direction = glm::normalize(light_direction);
     glUniformMatrix4fv(full_transform_matrix_location, 1, GL_FALSE,
                        &full_transform_matrix[0][0]);
     glUniformMatrix4fv(rotation_matrix_uniform_location, 1, GL_FALSE,
                        &model_rotation_matrix[0][0]);
+    glUniformMatrix4fv(model_to_world_matrix_uniform_location, 1, GL_FALSE,
+                       &model_to_world_matrix[0][0]);
     glUniform3fv(light_direction_uniform_location, 1, &light_direction[0]);
+    glUniform3fv(camera_location_uniform_location, 1, &position[0]);
     ShapeRenderer::render_shape(shape_gpu);
 }

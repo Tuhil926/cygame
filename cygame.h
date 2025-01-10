@@ -241,6 +241,8 @@ class Camera {
     GLuint full_transform_matrix_location;
     GLuint light_direction_uniform_location;
     GLuint rotation_matrix_uniform_location;
+    GLuint camera_location_uniform_location;
+    GLuint model_to_world_matrix_uniform_location;
     GLuint programObject;
     Camera();
     Camera(std::string vertex_shader_src_file_name,
