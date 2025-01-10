@@ -227,13 +227,13 @@ void StaticText::re_render() {
     SDL_FreeSurface(text_surface);
     SDL_DestroyTexture(text_texture);
     text_surface = TTF_RenderText_Solid(font, text.c_str(), color);
+    text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
     // text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
     pos_rect = {(int)(pos.x - text_surface->w / 2.0f),
                 (int)(pos.y - text_surface->h / 2.0f), text_surface->w,
                 text_surface->h};
 }
 void StaticText::draw() {
-    text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
     SDL_RenderCopy(screen, text_texture, NULL, &pos_rect);
 }
 

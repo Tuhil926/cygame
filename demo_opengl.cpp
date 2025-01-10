@@ -46,12 +46,11 @@ int main() {
     plane_object.rotate_y(0.5);
     plane_object.rotate_x(1.0);
 
+    auto font = TTF_OpenFont(DEFAULT_FONT, 14);
+
     Button button =
         Button({700, 300, 150, 60}, "hello", 24, {190, 180, 70, 255},
                {220, 210, 100, 255}, {255, 255, 150, 255}, NULL, NULL);
-    StaticText text = StaticText(
-        {100, 600}, "press w to toggle between mouse mode and camera mode", 20,
-        {100, 100, 255, 255}, screen, false);
 
     while (running) {
         // you need to use this handle_event macro if you want to be able to use
@@ -107,8 +106,11 @@ int main() {
         // call draw_opengl_screen
         switch_to_2d_rendering();
 
-        button.draw(screen);
-        text.draw();
+        draw_centered_text(
+            screen, font,
+            "press w to toggle between mouse mode and camera mode", {500, 20},
+            {255, 255, 255, 255});
+        // button.draw(screen);
 
         // switches to opengl shaders for 3d, sets the viewport size to window
         // size and swaps the frame buffer to display what was drawn
