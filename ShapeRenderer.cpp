@@ -73,6 +73,10 @@ void ShapeRenderer::send_shapes() {
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE,
                           combined_shape->get_stride_bytes(),
                           (void *)(combined_shape->get_normal_offset()));
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE,
+                          combined_shape->get_stride_bytes(),
+                          (void *)(combined_shape->get_texture_coord_offset()));
 
     // generate element array buffer and send index data
     glGenBuffers(1, &myElementBufferID);

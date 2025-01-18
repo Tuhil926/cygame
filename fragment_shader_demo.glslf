@@ -2,6 +2,7 @@
 in vec3 theColor;
 in vec3 theNormal;
 in vec3 pos;
+in vec2 textureCoord;
 out vec4 color;
 
 uniform vec3 lightDirection;

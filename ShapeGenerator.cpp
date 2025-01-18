@@ -1,5 +1,6 @@
 #include "cygame.h"
 #include "glad/glad.h"
+#include "glm/ext/vector_float2.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include <cassert>
 #include <cstdio>
@@ -20,75 +21,99 @@ Shape *ShapeGenerator::get_cube() {
         1.0,       1.0,  1.0,  // top face
         /**/ 1.0,  1.0,  0.0,  //
         /**/ 0.0,  0.0,  1.0,  //
+        /**/ 0.0,  0.0,        //
         -1.0,      1.0,  1.0,  //
         /**/ 1.0,  0.0,  1.0,  //
         /**/ 0.0,  0.0,  1.0,  //
+        /**/ 0.0,  0.0,        //
         -1.0,      -1.0, 1.0,  //
         /**/ 0.0,  0.0,  1.0,  //
         /**/ 0.0,  0.0,  1.0,  //
+        /**/ 0.0,  0.0,        //
         1.0,       -1.0, 1.0,  //
         /**/ 1.0,  0.0,  0.0,  //
         /**/ 0.0,  0.0,  1.0,  //
+        /**/ 0.0,  0.0,        //
         1.0,       1.0,  -1.0, // bottom face
         /**/ 0.0,  1.0,  1.0,  //
         /**/ 0.0,  0.0,  -1.0, //
+        /**/ 0.0,  0.0,        //
         -1.0,      1.0,  -1.0, //
         /**/ 0.0,  1.0,  0.0,  //
         /**/ 0.0,  0.0,  -1.0, //
+        /**/ 0.0,  0.0,        //
         -1.0,      -1.0, -1.0, //
         /**/ 0.0,  1.0,  0.5,  //
         /**/ 0.0,  0.0,  -1.0, //
+        /**/ 0.0,  0.0,        //
         1.0,       -1.0, -1.0, //
         /**/ 0.5,  1.0,  0.5,  //
         /**/ 0.0,  0.0,  -1.0, //
+        /**/ 0.0,  0.0,        //
         1.0,       1.0,  1.0,  // right face
         /**/ 1.0,  0.0,  0.5,  //
         /**/ 1.0,  0.0,  0.0,  //
+        /**/ 0.0,  0.0,        //
         1.0,       -1.0, 1.0,  //
         /**/ 1.0,  0.0,  1.0,  //
         /**/ 1.0,  0.0,  0.0,  //
+        /**/ 0.0,  0.0,        //
         1.0,       -1.0, -1.0, //
         /**/ 0.0,  0.0,  1.0,  //
         /**/ 1.0,  0.0,  0.0,  //
+        /**/ 0.0,  0.0,        //
         1.0,       1.0,  -1.0, //
         /**/ 0.0,  0.5,  1.0,  //
         /**/ 1.0,  0.0,  0.0,  //
+        /**/ 0.0,  0.0,        //
         -1.0,      1.0,  1.0,  // left face
         /**/ 1.0,  0.5,  1.0,  //
         /**/ -1.0, 0.0,  0.0,  //
+        /**/ 0.0,  0.0,        //
         -1.0,      -1.0, 1.0,  //
         /**/ 1.0,  0.5,  0.5,  //
         /**/ -1.0, 0.0,  0.0,  //
+        /**/ 0.0,  0.0,        //
         -1.0,      -1.0, -1.0, //
         /**/ 0.5,  0.5,  0.5,  //
         /**/ -1.0, 0.0,  0.0,  //
+        /**/ 0.0,  0.0,        //
         -1.0,      1.0,  -1.0, //
         /**/ 0.5,  1.0,  0.5,  //
         /**/ -1.0, 0.0,  0.0,  //
+        /**/ 0.0,  0.0,        //
         1.0,       1.0,  1.0,  // front face
         /**/ 0.5,  1.0,  1.0,  //
         /**/ 0.0,  1.0,  0.0,  //
+        /**/ 0.0,  0.0,        //
         -1.0,      1.0,  1.0,  //
         /**/ 0.0,  0.0,  1.0,  //
         /**/ 0.0,  1.0,  0.0,  //
+        /**/ 0.0,  0.0,        //
         -1.0,      1.0,  -1.0, //
         /**/ 0.0,  1.0,  0.0,  //
         /**/ 0.0,  1.0,  0.0,  //
+        /**/ 0.0,  0.0,        //
         1.0,       1.0,  -1.0, //
         /**/ 1.0,  1.0,  0.0,  //
         /**/ 0.0,  1.0,  0.0,  //
+        /**/ 0.0,  0.0,        //
         1.0,       -1.0, 1.0,  // back face
         /**/ 1.0,  0.0,  0.0,  //
         /**/ 0.0,  -1.0, 0.0,  //
+        /**/ 0.0,  0.0,        //
         -1.0,      -1.0, 1.0,  //
         /**/ 1.0,  0.0,  1.0,  //
         /**/ 0.0,  -1.0, 0.0,  //
+        /**/ 0.0,  0.0,        //
         -1.0,      -1.0, -1.0, //
         /**/ 1.0,  1.0,  0.0,  //
         /**/ 0.0,  -1.0, 0.0,  //
+        /**/ 0.0,  0.0,        //
         1.0,       -1.0, -1.0, //
         /**/ 0.0,  1.0,  0.0,  //
         /**/ 0.0,  -1.0, 0.0,  //
+        /**/ 0.0,  0.0,        //
     };
     GLushort inds[] = {
         0,  1,  2,  2,  3,  0,  //
@@ -139,6 +164,11 @@ Shape *ShapeGenerator::get_sphere(int num_verts_in_circle, int num_circles) {
             verts.push_back(new_vert.y);
             verts.push_back(new_vert.z);
 
+            // text_coord
+
+            verts.push_back(0);
+            verts.push_back(0);
+
             y_angle += glm::two_pi<float>() / (float)num_verts_in_circle;
         }
     }
@@ -155,6 +185,9 @@ Shape *ShapeGenerator::get_sphere(int num_verts_in_circle, int num_circles) {
     verts.push_back(1.0);
     verts.push_back(0.0);
 
+    verts.push_back(0);
+    verts.push_back(0);
+
     // bottom vertex
     verts.push_back(0.0);
     verts.push_back(-1.0);
@@ -167,6 +200,9 @@ Shape *ShapeGenerator::get_sphere(int num_verts_in_circle, int num_circles) {
     verts.push_back(0.0);
     verts.push_back(-1.0);
     verts.push_back(0.0);
+
+    verts.push_back(0);
+    verts.push_back(0);
 
     for (int circle_ind = 0; circle_ind < num_circles - 1; circle_ind++) {
         for (int vert_ind = 0; vert_ind < num_verts_in_circle; vert_ind++) {
@@ -287,6 +323,7 @@ Shape *ShapeGenerator::get_from_file(std::string filename) {
     std::ifstream inp_file(filename);
     std::vector<glm::vec3> obj_vertices;
     std::vector<glm::vec3> obj_normals;
+    std::vector<glm::vec2> obj_texture_coords;
     std::vector<GLfloat> verts;
     std::vector<GLushort> indices;
     std::map<std::string, Material> materials;
@@ -320,6 +357,7 @@ Shape *ShapeGenerator::get_from_file(std::string filename) {
         } else if (linetype == "vt") {
             float x, y;
             line_stream >> x >> y;
+            obj_texture_coords.push_back({x, y});
         } else if (linetype == "usemtl") {
             std::string material_name;
             line_stream >> material_name;
@@ -364,6 +402,10 @@ Shape *ShapeGenerator::get_from_file(std::string filename) {
                 glm::vec3 vert = obj_vertices[face_verts[i][0] - 1];
                 glm::vec3 normal(1.0f, 1.0f, 1.0f);
                 glm::vec3 color = curr_material.color;
+                glm::vec2 texture_coord(0.0f, 0.0f);
+                if (face_verts[i].size() > 1) {
+                    texture_coord = obj_texture_coords[face_verts[i][1] - 1];
+                }
                 if (face_verts[i].size() > 2) {
                     normal = obj_normals[face_verts[i][2] - 1];
                 }
@@ -376,6 +418,8 @@ Shape *ShapeGenerator::get_from_file(std::string filename) {
                 verts.push_back(normal.x);
                 verts.push_back(normal.y);
                 verts.push_back(normal.z);
+                verts.push_back(texture_coord.x);
+                verts.push_back(texture_coord.y);
                 num_verts++;
                 if (i == 0) {
                     first_vert_ind = num_verts;

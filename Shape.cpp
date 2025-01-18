@@ -19,6 +19,7 @@ GLsizeiptr Shape::get_stride_bytes() {
 }
 GLsizeiptr Shape::get_color_offset() { return (3) * sizeof(GLfloat); }
 GLsizeiptr Shape::get_normal_offset() { return (6) * sizeof(GLfloat); }
+GLsizeiptr Shape::get_texture_coord_offset() { return (9) * sizeof(GLfloat); }
 void Shape::print_values() {
     for (int i = 0; i < vertex_count; i++) {
         std::cout << "vert: " << vertices[NUM_FLOATS_PER_VERTEX * i + 0] << ' '

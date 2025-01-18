@@ -173,7 +173,7 @@ int draw_centered_text(CYScreen screen, TTF_Font *font, std::string text,
 
 void draw_aa_circle(CYScreen screen, Pos2D pos, int radius, Color color);
 
-#define NUM_FLOATS_PER_VERTEX 9
+#define NUM_FLOATS_PER_VERTEX 11
 
 class Shape {
   public:
@@ -188,6 +188,7 @@ class Shape {
     GLsizeiptr get_stride_bytes();
     GLsizeiptr get_color_offset();
     GLsizeiptr get_normal_offset();
+    GLsizeiptr get_texture_coord_offset();
     void print_values();
 };
 
