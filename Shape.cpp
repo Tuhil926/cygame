@@ -39,3 +39,8 @@ void Shape::print_values() {
             std::cout << std::endl;
     }
 }
+
+ShapeOnGPU::ShapeOnGPU() {
+    num_vertices = 0;
+    num_indices = 0;
+}

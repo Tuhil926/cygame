@@ -1,5 +1,12 @@
 #include "cygame.h"
 
+ShapeOnGPU default_rect;
+
+ShapeOnGPU get_default_rect() { return default_rect; }
+ShapeRenderer::ShapeRenderer() {
+    Shape *rect = ShapeGenerator::get_rect();
+    default_rect = this->add_shape(rect);
+}
 ShapeOnGPU ShapeRenderer::add_shape(Shape *shape) {
     ShapeOnGPU ret;
     ret.offset_vertices = tot_offset_vertices;

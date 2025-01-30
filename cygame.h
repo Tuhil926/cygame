@@ -14,8 +14,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/mat4x4.hpp>
 #include <iostream>
+#include <map>
 #include <string>
 #include <vector>
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 #include <SDL.h>
 #include <SDL2_gfxPrimitives.h>
@@ -196,6 +200,7 @@ class ShapeGenerator {
   public:
     static Shape *get_triangle();
     static Shape *get_triangle2();
+    static Shape *get_rect();
     static Shape *get_cube();
     static Shape *get_sphere(int num_verts_in_circle, int num_circles);
     static Shape *get_from_file(std::string filename);
@@ -203,6 +208,7 @@ class ShapeGenerator {
 
 class ShapeOnGPU {
   public:
+    ShapeOnGPU();
     GLint offset_vertices;
     GLsizei num_vertices;
     GLint offset_indices;
@@ -219,11 +225,29 @@ class ShapeRenderer {
     int tot_offset_vertices = 0;
     int tot_offset_indices = 0;
     bool sent_already = false;
-    ShapeRenderer() {}
+    ShapeRenderer();
     ShapeOnGPU add_shape(Shape *shape);
 
     void send_shapes();
     static void render_shape(ShapeOnGPU shape_gpu);
+};
+
+ShapeOnGPU get_default_rect();
+
+struct Character {
+    unsigned int TextureID; // ID handle of the glyph texture
+    glm::ivec2 size;        // Size of glyph
+    glm::ivec2 bearing;     // Offset from baseline to left/top of glyph
+    long advance;           // Offset to advance to next glyph
+};
+
+class Font {
+  public:
+    FT_Library ft;
+    FT_Face face;
+    std::map<char, Character> characters;
+    Font(std::string filename, int size);
+    void cleanup();
 };
 
 class Camera {
@@ -244,6 +268,8 @@ class Camera {
     GLuint rotation_matrix_uniform_location;
     GLuint camera_location_uniform_location;
     GLuint model_to_world_matrix_uniform_location;
+    GLuint text_uniform_location;
+    GLuint is_texture_uniform_location;
     GLuint programObject;
     Camera();
     Camera(std::string vertex_shader_src_file_name,
@@ -260,6 +286,8 @@ class Camera {
     void draw_shape(glm::mat4 model_translation_matrix,
                     glm::mat4 model_scale_matrix,
                     glm::mat4 model_rotation_matrix, ShapeOnGPU shape_gpu);
+    void render_text(std::string text, float x, float y, glm::vec3 color,
+                     Font *font);
 };
 
 class Object {

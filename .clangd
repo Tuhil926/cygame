@@ -1,2 +1,2 @@
 CompileFlags:
-  Add: [-I/usr/include/SDL2, -I./include]
+  Add: [-I/usr/include/SDL2, -I./include, -I/usr/local/include/freetype2]

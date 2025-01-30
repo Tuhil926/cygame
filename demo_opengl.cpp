@@ -46,11 +46,13 @@ int main() {
     plane_object.rotate_y(0.5);
     plane_object.rotate_x(1.0);
 
-    auto font = TTF_OpenFont(DEFAULT_FONT, 14);
+    auto font = Font(DEFAULT_FONT, 32);
 
-    Button button =
-        Button({700, 300, 150, 60}, "hello", 24, {190, 180, 70, 255},
-               {220, 210, 100, 255}, {255, 255, 150, 255}, NULL, NULL);
+    // auto font = TTF_OpenFont(DEFAULT_FONT, 14);
+
+    // Button button =
+    //     Button({700, 300, 150, 60}, "hello", 24, {190, 180, 70, 255},
+    //            {220, 210, 100, 255}, {255, 255, 150, 255}, NULL, NULL);
 
     while (running) {
         // you need to use this handle_event macro if you want to be able to use
@@ -90,7 +92,7 @@ int main() {
         MouseState mouse_state = get_mouse_state();
 
         camera.track_input(keys, mouse_state, 1.0 / 60.0);
-        button.update(mouse_state);
+        // button.update(mouse_state);
 
         // drawing things
 
@@ -99,17 +101,20 @@ int main() {
         sphere_object.draw(camera);
         cube_object.draw(camera);
         plane_object.draw(camera);
+        camera.render_text(
+            "press w to toggle between mouse mode and camera mode", 170, 30,
+            {0.0, 1.0, 1.0}, &font);
         // cube_object_2.draw(camera);
 
         // IMPORTANT: This function has to be called every frame before drawing
         // anything in 2d. The rendering will be switched back to 3d when you
         // call draw_opengl_screen
-        switch_to_2d_rendering();
-
-        draw_centered_text(
-            screen, font,
-            "press w to toggle between mouse mode and camera mode", {500, 20},
-            {255, 255, 255, 255});
+        // switch_to_2d_rendering();
+        //
+        // draw_centered_text(
+        //     screen, font,
+        //     "press w to toggle between mouse mode and camera mode", {500,
+        //     20}, {255, 255, 255, 255});
         // button.draw(screen);
 
         // switches to opengl shaders for 3d, sets the viewport size to window
@@ -118,5 +123,6 @@ int main() {
 
         delay(1000 / 60);
     }
+    font.cleanup();
     return 0;
 }

@@ -1,4 +1,8 @@
 #include "cygame.h"
+#include "glad/glad.h"
+#include "glm/ext/matrix_clip_space.hpp"
+#include <iostream>
+#include <iterator>
 
 Camera::Camera() {
     position = glm::vec3(0, 0, 0);
@@ -82,6 +86,9 @@ Camera::Camera(std::string vertex_shader_src_file_name,
         glGetUniformLocation(programObject, "cameraLocation");
     model_to_world_matrix_uniform_location =
         glGetUniformLocation(programObject, "modelToWorldMatrix");
+    text_uniform_location = glGetUniformLocation(programObject, "text");
+    is_texture_uniform_location =
+        glGetUniformLocation(programObject, "isTexture");
 }
 glm::mat4 Camera::get_world_to_perspective_transform_matrix() {
     glm::vec3 looking_vector =
@@ -175,4 +182,67 @@ void Camera::draw_shape(glm::mat4 model_translation_matrix,
     glUniform3fv(light_direction_uniform_location, 1, &light_direction[0]);
     glUniform3fv(camera_location_uniform_location, 1, &position[0]);
     ShapeRenderer::render_shape(shape_gpu);
+}
+
+void Camera::render_text(std::string text, float x, float y, glm::vec3 color,
+                         Font *font) {
+    float scale = 0.5;
+    glActiveTexture(GL_TEXTURE0);
+    glUniform1i(is_texture_uniform_location, 1);
+    glm::mat4 projection_matrix =
+        glm::ortho(0.0f, get_global_width(), get_global_height(), 0.0f);
+    glm::mat4 rotation_matrix(1.0f);
+    glm::vec3 light_direction(0.0f, 0.0f, 1.0f);
+    glm::vec3 position_2d(0.0f, 0.0f, 1.0f);
+    glUniformMatrix4fv(full_transform_matrix_location, 1, GL_FALSE,
+                       &projection_matrix[0][0]);
+    glUniformMatrix4fv(rotation_matrix_uniform_location, 1, GL_FALSE,
+                       &rotation_matrix[0][0]);
+    glUniformMatrix4fv(model_to_world_matrix_uniform_location, 1, GL_FALSE,
+                       &projection_matrix[0][0]);
+    glUniform3fv(light_direction_uniform_location, 1, &light_direction[0]);
+    glUniform3fv(camera_location_uniform_location, 1, &position[0]);
+    for (char c : text) {
+        Character character = font->characters[c];
+        float xpos = x + character.bearing.x * scale;
+        float ypos = y - character.bearing.y * scale;
+
+        float w = character.size.x * scale;
+        float h = character.size.y * scale;
+
+        // std::cout << xpos << " " << ypos << " " << w << ' ' << h <<
+        // std::endl;
+
+        GLfloat verts[] = {
+            xpos + w,     ypos + h, 0.0,     //
+            /**/ color.r, color.g,  color.b, //
+            /**/ 0.0,     0.0,      1.0,     //
+            /**/ 1.0,     1.0,               //
+            xpos,         ypos + h, 0.0,     // top face
+            /**/ color.r, color.g,  color.b, //
+            /**/ 0.0,     0.0,      1.0,     //
+            /**/ 0.0,     1.0,               //
+            xpos,         ypos,     0.0,     //
+            /**/ color.r, color.g,  color.b, //
+            /**/ 0.0,     0.0,      1.0,     //
+            /**/ 0.0,     0.0,               //
+            xpos + w,     ypos,     0.0,     //
+            /**/ color.r, color.g,  color.b, //
+            /**/ 0.0,     0.0,      1.0,     //
+            /**/ 1.0,     0.0,               //
+        };
+        // GLushort inds[] = {0, 1, 2, 2, 3, 0};
+        ShapeOnGPU default_rect = get_default_rect();
+        glBindTexture(GL_TEXTURE_2D, character.TextureID);
+        glBufferSubData(GL_ARRAY_BUFFER,
+                        default_rect.offset_vertices * NUM_FLOATS_PER_VERTEX *
+                            sizeof(GLfloat),
+                        default_rect.num_vertices * NUM_FLOATS_PER_VERTEX *
+                            sizeof(GLfloat),
+                        verts);
+
+        x += (character.advance >> 6) * scale;
+        ShapeRenderer::render_shape(default_rect);
+    }
+    glUniform1i(is_texture_uniform_location, 0);
 }

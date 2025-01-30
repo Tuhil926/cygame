@@ -130,6 +130,59 @@ Shape *ShapeGenerator::get_cube() {
     return ret;
 }
 
+Shape *ShapeGenerator::get_rect() {
+    Shape *ret = new Shape();
+    ret->vertex_count = 4;
+    ret->index_count = 6;
+    ret->num_floats_per_vertex = NUM_FLOATS_PER_VERTEX;
+    float xpos = 500;
+    float ypos = 50;
+    float w = 9;
+    float h = 13;
+    GLfloat verts[] = {
+        1.0,       1.0,  0.0, // top face
+        /**/ 1.0,  1.0,  1.0, //
+        /**/ 0.0,  0.0,  1.0, //
+        /**/ 1.0,  1.0,       //
+        -1.0,      1.0,  0.0, //
+        /**/ 1.0,  1.0,  1.0, //
+        /**/ 0.0,  0.0,  1.0, //
+        /**/ -1.0, 1.0,       //
+        -1.0,      -1.0, 0.0, //
+        /**/ 1.0,  1.0,  1.0, //
+        /**/ 0.0,  0.0,  1.0, //
+        /**/ -1.0, -1.0,      //
+        1.0,       -1.0, 0.0, //
+        /**/ 1.0,  1.0,  1.0, //
+        /**/ 0.0,  0.0,  1.0, //
+        /**/ 1.0,  -1.0,      //
+    };
+    // GLfloat verts[] = {
+    //     xpos + w,  ypos + h, 0.0, //
+    //     /**/ 1.0,  1.0,      1.0, //
+    //     /**/ 0.0,  0.0,      1.0, //
+    //     /**/ 1.0,  1.0,           //
+    //     xpos,      ypos + h, 0.0, // top face
+    //     /**/ 1.0,  1.0,      1.0, //
+    //     /**/ 0.0,  0.0,      1.0, //
+    //     /**/ -1.0, 1.0,           //
+    //     xpos,      ypos,     0.0, //
+    //     /**/ 1.0,  1.0,      1.0, //
+    //     /**/ 0.0,  0.0,      1.0, //
+    //     /**/ -1.0, -1.0,          //
+    //     xpos + w,  ypos,     0.0, //
+    //     /**/ 1.0,  1.0,      1.0, //
+    //     /**/ 0.0,  0.0,      1.0, //
+    //     /**/ 1.0,  -1.0,          //
+    // };
+    GLushort inds[] = {0, 2, 1, 2, 0, 3};
+    ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
+    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
+    memcpy(ret->vertices, verts, ret->get_size_bytes());
+    memcpy(ret->indices, inds, ret->get_indices_size_bytes());
+    return ret;
+}
+
 Shape *ShapeGenerator::get_sphere(int num_verts_in_circle, int num_circles) {
     Shape *ret = new Shape();
     ret->vertex_count = 2 + num_verts_in_circle * num_circles;

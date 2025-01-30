@@ -7,6 +7,8 @@ out vec4 color;
 
 uniform vec3 lightDirection;
 uniform vec3 cameraLocation;
+uniform sampler2D text;
+uniform int isTexture;
 void main() {
     // color = vec4(1.0f, 0.5f, 0.0f, 1.0f);
     float intensity = dot(lightDirection, theNormal);
@@ -19,7 +21,14 @@ void main() {
 
     vec4 specColor = vec4(specFactor, specFactor, specFactor, 1.0);
 
-    color = clamp(vec4(theColor, 1.0) * intensity_vec + specColor, 0.0, 1.0);
+    if (isTexture == 0) {
+        color = clamp(vec4(theColor, 1.0) * intensity_vec + specColor, 0.0, 1.0);
+    } else {
+        vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, textureCoord).r);
+        color = clamp(vec4(theColor, 1.0) * intensity_vec + specColor, 0.0, 1.0) * sampled;
+        // color = clamp(vec4(theColor, 1.0), 0.0, 1.0) * sampled;
+        // color = clamp(vec4(theColor, 1.0), 0.0, 1.0);
+    }
     // color = clamp(specColor, 0.0, 1.0);
     // color = vec4(theColor, 1.0);
 }
