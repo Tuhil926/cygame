@@ -1,7 +1,9 @@
 #include "cygame.h"
 #include "glad/glad.h"
+#include <ostream>
 
 Font::Font(std::string filename, int size) {
+    this->size = size;
     if (FT_Init_FreeType(&ft)) {
         std::cout << "ERROR::FREETYPE: Could not init FreeType Library"
                   << std::endl;
@@ -41,8 +43,23 @@ Font::Font(std::string filename, int size) {
         characters.insert(std::pair<char, Character>(c, character));
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // std::cout << (face->size->metrics.ascender >> 6) << " "
+        //           << (face->size->metrics.descender >> 6) << std::endl;
     }
 }
+
+int Font::get_string_width(std::string &str) {
+    int tot_width = 0;
+    for (char c : str) {
+        tot_width += characters[c].advance >> 6;
+    }
+    return tot_width;
+}
+
+int Font::get_ascent() { return face->size->metrics.ascender >> 6; }
+
+int Font::get_descent() { return face->size->metrics.descender >> 6; }
+
 void Font::cleanup() {
     FT_Done_Face(face);
     FT_Done_FreeType(ft);

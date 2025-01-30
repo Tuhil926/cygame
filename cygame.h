@@ -245,8 +245,12 @@ class Font {
   public:
     FT_Library ft;
     FT_Face face;
+    int size;
     std::map<char, Character> characters;
     Font(std::string filename, int size);
+    int get_string_width(std::string &str);
+    int get_ascent();
+    int get_descent();
     void cleanup();
 };
 
@@ -386,36 +390,53 @@ class Slider {
     void update(MouseState mouse_state);
 };
 
+class Text {
+  public:
+    Pos2D pos;
+    std::string text;
+    Font *font;
+    Color text_color;
+    SDL_Rect pos_rect;
+    bool centered_horizontal;
+    bool centered_vertical;
+    bool has_background;
+    Color background_color;
+    Text(Pos2D pos, std::string text, Font *font, Color text_color,
+         bool centered_horizontal = true, bool centered_vertical = true,
+         bool has_background = false, Color background_color = {0, 0, 0, 255});
+    void draw(Camera &camera);
+};
+
 // use this when you want to render text, but dont't want the extra cost of
 // re-rendering the text from the string every frame. Use this only if you're
 // not changing the text very often, or better, not at all.(I wrote this, and
 // immediately broke this rule. Ig go ahead and use it for all text, because
 // it's the same performance as using my draw_centered_text function, but more
 // convenient.)
-class StaticText {
-  public:
-    Pos2D pos;
-    std::string text;
-    Color color;
-    TTF_Font *font;
-    int font_size;
-    Color text_color;
-    SDL_Surface *text_surface;
-    SDL_Texture *text_texture;
-    CYScreen screen;
-    SDL_Rect pos_rect;
-    StaticText(Pos2D pos, std::string text, int font_size, Color text_color,
-               CYScreen screen, bool centered_horizontal = true,
-               bool centered_vertical = true, bool has_background = false,
-               Color background_color = {200, 200, 200, 255});
-    ~StaticText();
-    void set_text(std::string new_text);
-    void change_font_size(int font_size);
-    // re-initialises the rendered font. Call this when you change the text,
-    // color or position
-    void re_render();
-    void draw();
-};
+// class StaticText {
+//   public:
+//     Pos2D pos;
+//     std::string text;
+//     Color color;
+//     TTF_Font *font;
+//     int font_size;
+//     Color text_color;
+//     SDL_Surface *text_surface;
+//     SDL_Texture *text_texture;
+//     CYScreen screen;
+//     SDL_Rect pos_rect;
+//     StaticText(Pos2D pos, std::string text, int font_size, Color text_color,
+//                CYScreen screen, bool centered_horizontal = true,
+//                bool centered_vertical = true, bool has_background = false,
+//                Color background_color = {200, 200, 200, 255});
+//     ~StaticText();
+//     void set_text(std::string new_text);
+//     void change_font_size(int font_size);
+//     // re-initialises the rendered font. Call this when you change the text,
+//     // color or position
+//     void re_render();
+//     void draw();
+// };
 class Selector;
 struct selector_args {
     Selector *selector;

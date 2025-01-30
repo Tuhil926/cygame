@@ -186,7 +186,7 @@ void Camera::draw_shape(glm::mat4 model_translation_matrix,
 
 void Camera::render_text(std::string text, float x, float y, glm::vec3 color,
                          Font *font) {
-    float scale = 0.5;
+    float scale = 1.0;
     glActiveTexture(GL_TEXTURE0);
     glUniform1i(is_texture_uniform_location, 1);
     glm::mat4 projection_matrix =

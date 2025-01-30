@@ -16,10 +16,12 @@ Button::Button(SDL_Rect rect, std::string text, int font_size, Color color,
     clicked = false;
     this->on_click = on_click;
     this->arg = arg;
+    // TODO: change
     font = TTF_OpenFont(DEFAULT_FONT, font_size);
     this->text_color = text_color;
 }
 void Button::draw(CYScreen screen) {
+    // TODO: change
     fill_rect(rect, screen, color);
     if (text.size())
         draw_centered_text(screen, font, text,
@@ -190,52 +192,75 @@ void Slider::update(MouseState mouse_state) {
         is_selected = false;
 }
 
-StaticText::StaticText(Pos2D pos, std::string text, int font_size,
-                       Color text_color, CYScreen screen,
-                       bool centered_horizontal, bool centered_vertical,
-                       bool has_background, Color background_color) {
+Text::Text(Pos2D pos, std::string text, Font *font, Color text_color,
+           bool centered_horizontal, bool centered_vertical,
+           bool has_background, Color background_color) {
     this->pos = pos;
     this->text = text;
-    this->color = background_color;
+    this->font = font;
     this->text_color = text_color;
-    this->font_size = font_size;
-    this->screen = screen;
-    font = TTF_OpenFont(DEFAULT_FONT, font_size);
-    text_surface = TTF_RenderText_Solid(font, text.c_str(), color);
-    // text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
-    pos_rect = {(int)(pos.x - (text_surface->w / 2.0f) * centered_horizontal),
-                (int)(pos.y - (text_surface->h / 2.0f) * centered_vertical),
-                text_surface->w, text_surface->h};
+    this->centered_horizontal = centered_horizontal;
+    this->centered_vertical = centered_vertical;
+    this->has_background = has_background;
+    this->background_color = background_color;
 }
-StaticText::~StaticText() {
-    SDL_FreeSurface(text_surface);
-    SDL_DestroyTexture(text_texture);
-}
-
-void StaticText::change_font_size(int font_size) {
-    this->font_size = font_size;
-    font = TTF_OpenFont(DEFAULT_FONT, font_size);
+void Text::draw(Camera &camera) {
+    int width = font->get_string_width(text);
+    int ascent = font->get_ascent();
+    int descent = font->get_descent();
+    camera.render_text(text, pos.x - centered_horizontal * (width / 2.0), pos.y,
+                       {text_color.r / (float)255, text_color.g / (float)255,
+                        text_color.b / (float)255},
+                       font);
 }
 
-void StaticText::set_text(std::string new_text) {
-    text = new_text;
-    re_render();
-}
-// re-initialises the rendered font. Call this when you change the text,
-// color or position
-void StaticText::re_render() {
-    SDL_FreeSurface(text_surface);
-    SDL_DestroyTexture(text_texture);
-    text_surface = TTF_RenderText_Solid(font, text.c_str(), color);
-    text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
-    // text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
-    pos_rect = {(int)(pos.x - text_surface->w / 2.0f),
-                (int)(pos.y - text_surface->h / 2.0f), text_surface->w,
-                text_surface->h};
-}
-void StaticText::draw() {
-    SDL_RenderCopy(screen, text_texture, NULL, &pos_rect);
-}
+// StaticText::StaticText(Pos2D pos, std::string text, int font_size,
+//                        Color text_color, CYScreen screen,
+//                        bool centered_horizontal, bool centered_vertical,
+//                        bool has_background, Color background_color) {
+//     this->pos = pos;
+//     this->text = text;
+//     this->color = background_color;
+//     this->text_color = text_color;
+//     this->font_size = font_size;
+//     this->screen = screen;
+//     font = TTF_OpenFont(DEFAULT_FONT, font_size);
+//     text_surface = TTF_RenderText_Solid(font, text.c_str(), color);
+//     // text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
+//     pos_rect = {(int)(pos.x - (text_surface->w / 2.0f) *
+//     centered_horizontal),
+//                 (int)(pos.y - (text_surface->h / 2.0f) * centered_vertical),
+//                 text_surface->w, text_surface->h};
+// }
+// StaticText::~StaticText() {
+//     SDL_FreeSurface(text_surface);
+//     SDL_DestroyTexture(text_texture);
+// }
+//
+// void StaticText::change_font_size(int font_size) {
+//     this->font_size = font_size;
+//     font = TTF_OpenFont(DEFAULT_FONT, font_size);
+// }
+//
+// void StaticText::set_text(std::string new_text) {
+//     text = new_text;
+//     re_render();
+// }
+// // re-initialises the rendered font. Call this when you change the text,
+// // color or position
+// void StaticText::re_render() {
+//     SDL_FreeSurface(text_surface);
+//     SDL_DestroyTexture(text_texture);
+//     text_surface = TTF_RenderText_Solid(font, text.c_str(), color);
+//     text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
+//     // text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
+//     pos_rect = {(int)(pos.x - text_surface->w / 2.0f),
+//                 (int)(pos.y - text_surface->h / 2.0f), text_surface->w,
+//                 text_surface->h};
+// }
+// void StaticText::draw() {
+//     SDL_RenderCopy(screen, text_texture, NULL, &pos_rect);
+// }
 
 void _select(void *arg) {
     selector_args *s = (selector_args *)arg;

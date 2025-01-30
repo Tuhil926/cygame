@@ -46,7 +46,10 @@ int main() {
     plane_object.rotate_y(0.5);
     plane_object.rotate_x(1.0);
 
-    auto font = Font(DEFAULT_FONT, 32);
+    auto font = Font(DEFAULT_FONT, 16);
+
+    Text text({500, 30}, "press w to toggle between mouse mode and camera mode",
+              &font, {0, 255, 255, 255});
 
     // auto font = TTF_OpenFont(DEFAULT_FONT, 14);
 
@@ -101,9 +104,10 @@ int main() {
         sphere_object.draw(camera);
         cube_object.draw(camera);
         plane_object.draw(camera);
-        camera.render_text(
-            "press w to toggle between mouse mode and camera mode", 170, 30,
-            {0.0, 1.0, 1.0}, &font);
+        // camera.render_text(
+        //     "press w to toggle between mouse mode and camera mode", 170, 30,
+        //     {0.0, 1.0, 1.0}, &font);
+        text.draw(camera);
         // cube_object_2.draw(camera);
 
         // IMPORTANT: This function has to be called every frame before drawing
