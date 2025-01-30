@@ -1,11 +1,15 @@
 #include "cygame.h"
 
 ShapeOnGPU default_rect;
+ShapeOnGPU default_circle;
 
 ShapeOnGPU get_default_rect() { return default_rect; }
+ShapeOnGPU get_default_circle() { return default_circle; }
 ShapeRenderer::ShapeRenderer() {
     Shape *rect = ShapeGenerator::get_rect();
     default_rect = this->add_shape(rect);
+    Shape *circle = ShapeGenerator::get_circle(100);
+    default_circle = this->add_shape(circle);
 }
 ShapeOnGPU ShapeRenderer::add_shape(Shape *shape) {
     ShapeOnGPU ret;

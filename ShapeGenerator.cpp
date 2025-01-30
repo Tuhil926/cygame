@@ -183,6 +183,76 @@ Shape *ShapeGenerator::get_rect() {
     return ret;
 }
 
+Shape *ShapeGenerator::get_circle(int num_vertices) {
+    Shape *ret = new Shape();
+    ret->vertex_count = num_vertices + 1;
+    ret->index_count = 3 * num_vertices;
+    ret->num_floats_per_vertex = NUM_FLOATS_PER_VERTEX;
+    std::vector<GLfloat> verts;
+    std::vector<GLushort> inds;
+    glm::vec4 vert(1.0f, 0.0f, 0.0f, 0.0f);
+    float y_angle = 0.0f;
+    for (int j = 0; j < num_vertices; j++) {
+        auto rotate_mat_y =
+            glm::rotate(glm::mat4(1), y_angle, {0.0f, 0.0f, 1.0f});
+        auto new_vert = rotate_mat_y * vert;
+        // position
+        verts.push_back(new_vert.x);
+        verts.push_back(new_vert.y);
+        verts.push_back(1.0);
+
+        // color
+        verts.push_back(1.0);
+        verts.push_back(1.0);
+        verts.push_back(1.0);
+
+        // normal
+        verts.push_back(0);
+        verts.push_back(0);
+        verts.push_back(1);
+
+        // text_coord
+
+        verts.push_back(0);
+        verts.push_back(0);
+
+        y_angle += glm::two_pi<float>() / (float)num_vertices;
+    }
+    // top vertex
+    verts.push_back(0.0);
+    verts.push_back(0.0);
+    verts.push_back(1.0);
+
+    verts.push_back(1.0);
+    verts.push_back(1.0);
+    verts.push_back(1.0);
+
+    verts.push_back(0.0);
+    verts.push_back(0.0);
+    verts.push_back(1.0);
+
+    verts.push_back(0);
+    verts.push_back(0);
+
+    for (int vert_ind = 0; vert_ind < num_vertices; vert_ind++) {
+        int top_vert_ind = num_vertices;
+        int actual_vert_ind_top1 = vert_ind;
+        int actual_vert_ind_top2 = (vert_ind + 1) % num_vertices;
+        inds.push_back(actual_vert_ind_top2);
+        inds.push_back(actual_vert_ind_top1);
+        inds.push_back(top_vert_ind);
+    }
+    assert(verts.size() == ret->vertex_count * NUM_FLOATS_PER_VERTEX);
+    assert(inds.size() == ret->index_count);
+    ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
+    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
+    memcpy(ret->vertices, verts.data(), ret->get_size_bytes());
+    memcpy(ret->indices, inds.data(), ret->get_indices_size_bytes());
+    return ret;
+
+    return ret;
+}
+
 Shape *ShapeGenerator::get_sphere(int num_verts_in_circle, int num_circles) {
     Shape *ret = new Shape();
     ret->vertex_count = 2 + num_verts_in_circle * num_circles;

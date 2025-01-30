@@ -202,6 +202,7 @@ class ShapeGenerator {
     static Shape *get_triangle2();
     static Shape *get_rect();
     static Shape *get_cube();
+    static Shape *get_circle(int num_vertices);
     static Shape *get_sphere(int num_verts_in_circle, int num_circles);
     static Shape *get_from_file(std::string filename);
 };
@@ -233,6 +234,7 @@ class ShapeRenderer {
 };
 
 ShapeOnGPU get_default_rect();
+ShapeOnGPU get_default_circle();
 
 struct Character {
     unsigned int TextureID; // ID handle of the glyph texture
@@ -274,6 +276,7 @@ class Camera {
     GLuint model_to_world_matrix_uniform_location;
     GLuint text_uniform_location;
     GLuint is_texture_uniform_location;
+    GLuint spec_multiplier_uniform_location;
     GLuint programObject;
     Camera();
     Camera(std::string vertex_shader_src_file_name,
@@ -289,9 +292,16 @@ class Camera {
     // void draw_shape(glm::mat4 full_transform_matrix, ShapeOnGPU shape_gpu);
     void draw_shape(glm::mat4 model_translation_matrix,
                     glm::mat4 model_scale_matrix,
-                    glm::mat4 model_rotation_matrix, ShapeOnGPU shape_gpu);
+                    glm::mat4 model_rotation_matrix, ShapeOnGPU shape_gpu,
+                    glm::vec3 light_direction = {1.0f, 3.0f, 2.0f},
+                    bool is_2D = false);
+    void draw_circle(Pos2D pos, float radius, Color color);
     void render_text(std::string text, float x, float y, glm::vec3 color,
                      Font *font);
+    void draw_quad(Pos2D point1, Pos2D point2, Pos2D point3, Pos2D point4,
+                   Color color);
+    void draw_rect(SDL_Rect rect, Color color);
+    void draw_line(Pos2D pos1, Pos2D pos2, Color color, float width);
 };
 
 class Object {
@@ -311,6 +321,24 @@ class Object {
     void draw(Camera &camera);
 };
 
+class Text {
+  public:
+    Pos2D pos;
+    std::string text;
+    Font *font;
+    Color text_color;
+    SDL_Rect pos_rect;
+    bool centered_horizontal;
+    bool centered_vertical;
+    bool has_background;
+    Color background_color;
+    Text(Pos2D pos, std::string text, Font *font, Color text_color,
+         bool centered_horizontal = true, bool centered_vertical = true,
+         bool has_background = false, Color background_color = {0, 0, 0, 255});
+    Text() {}
+    void draw(Camera &camera);
+};
+
 // a button which takes a callback functions with a void* argument
 class Button {
   public:
@@ -326,14 +354,15 @@ class Button {
     bool clicked;
     SDL_Rect rect;
     void (*on_click)(void *);
-    TTF_Font *font;
+    Font *font;
     Color text_color;
     void *arg;
-    Button();
-    Button(SDL_Rect rect, std::string text, int font_size, Color color,
+    Text text_obj;
+    Button() {};
+    Button(SDL_Rect rect, std::string text, Font *font, Color color,
            Color hover_color, Color click_color, void (*on_click)(void *),
            void *arg = NULL, Color text_color = {0, 0, 0, 0});
-    void draw(CYScreen screen);
+    void draw(Camera &camera);
 
     void update(MouseState mouse_state);
 };
@@ -352,18 +381,18 @@ class InputBox {
     bool clicked;
     SDL_Rect rect;
     // void (*on_click)(void*);
-    TTF_Font *font;
+    Font *font;
     Color text_color;
     bool is_in_focus;
     int max_len;
-    int font_size;
     // float time_since_cursor_change;
     bool is_cursor_visible;
+    Text text_obj;
     // int prev_time;
-    InputBox(SDL_Rect rect, std::string text, int font_size, Color color,
+    InputBox(SDL_Rect rect, std::string text, Font *font, Color color,
              Color hover_color, Color click_color,
              Color text_color = {0, 0, 0, 0}, int max_len = 32);
-    void draw(CYScreen screen);
+    void draw(Camera &camera);
     // as long as you have called the handle_event macro previously, you
     // should just be able to pass _events without defining it. Otherwise,
     // figure it out yourself. Or just call the damn macro, it's not that hard.
@@ -386,25 +415,8 @@ class Slider {
     bool is_selected;
     Slider(Pos2D start, Pos2D end, float max_value, Color track_color,
            Color bob_color, float value = 0);
-    void draw(CYScreen screen);
-    void update(MouseState mouse_state);
-};
-
-class Text {
-  public:
-    Pos2D pos;
-    std::string text;
-    Font *font;
-    Color text_color;
-    SDL_Rect pos_rect;
-    bool centered_horizontal;
-    bool centered_vertical;
-    bool has_background;
-    Color background_color;
-    Text(Pos2D pos, std::string text, Font *font, Color text_color,
-         bool centered_horizontal = true, bool centered_vertical = true,
-         bool has_background = false, Color background_color = {0, 0, 0, 255});
     void draw(Camera &camera);
+    void update(MouseState mouse_state);
 };
 
 // use this when you want to render text, but dont't want the extra cost of
@@ -452,16 +464,16 @@ class Selector {
 
     Color hover_color;
     Color click_color;
-    TTF_Font *font;
+    Font *font;
     std::vector<std::string> options;
     int selected;
     std::vector<Button> buttons;
     std::vector<selector_args> args;
     Button original_button;
     bool is_dropped_down;
-    Selector(SDL_Rect rect, int font_size, std::vector<std::string> options,
+    Selector(SDL_Rect rect, Font *font, std::vector<std::string> options,
              Color color, Color hover_color, Color click_color);
-    void draw(CYScreen screen);
+    void draw(Camera &camera);
     void update(MouseState mouse_state);
 };
 

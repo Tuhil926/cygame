@@ -1,6 +1,4 @@
 #include "cygame.h"
-#include "glad/glad.h"
-#include <iostream>
 
 using namespace std;
 using namespace glm;
@@ -48,14 +46,10 @@ int main() {
 
     auto font = Font(DEFAULT_FONT, 16);
 
-    Text text({500, 30}, "press w to toggle between mouse mode and camera mode",
+    Text text({500, 30}, "press m to toggle between mouse mode and camera mode",
               &font, {0, 255, 255, 255});
-
-    // auto font = TTF_OpenFont(DEFAULT_FONT, 14);
-
-    // Button button =
-    //     Button({700, 300, 150, 60}, "hello", 24, {190, 180, 70, 255},
-    //            {220, 210, 100, 255}, {255, 255, 150, 255}, NULL, NULL);
+    Button button1({50, 50, 100, 50}, "hello", &font, {150, 150, 60, 255},
+                   {200, 200, 100, 255}, {255, 255, 150, 255}, NULL);
 
     while (running) {
         // you need to use this handle_event macro if you want to be able to use
@@ -83,7 +77,6 @@ int main() {
         // gets a list of keys that are currently held down (Keys is Uint8 *).
         // You can use this instead of keydown events to detect keys being
         // pressed, because it's faster.
-
         Keys keys = get_keys_pressed();
 
         if (keys[K_t]) {
@@ -91,11 +84,10 @@ int main() {
         }
 
         // this is a similar thing for the mouse input.
-
         MouseState mouse_state = get_mouse_state();
 
         camera.track_input(keys, mouse_state, 1.0 / 60.0);
-        // button.update(mouse_state);
+        button1.update(mouse_state);
 
         // drawing things
 
@@ -108,21 +100,19 @@ int main() {
         //     "press w to toggle between mouse mode and camera mode", 170, 30,
         //     {0.0, 1.0, 1.0}, &font);
         text.draw(camera);
+
+        camera.draw_rect({0, 600, 100, 100}, {255, 0, 255, 255});
+
+        button1.draw(camera);
+
+        camera.draw_line({100, 100}, {500, 500}, {255, 255, 255, 255}, 0.5);
+
+        camera.draw_circle({600, 600}, 50, {255, 0, 0, 255});
+
         // cube_object_2.draw(camera);
 
-        // IMPORTANT: This function has to be called every frame before drawing
-        // anything in 2d. The rendering will be switched back to 3d when you
-        // call draw_opengl_screen
-        // switch_to_2d_rendering();
-        //
-        // draw_centered_text(
-        //     screen, font,
-        //     "press w to toggle between mouse mode and camera mode", {500,
-        //     20}, {255, 255, 255, 255});
-        // button.draw(screen);
-
-        // switches to opengl shaders for 3d, sets the viewport size to window
-        // size and swaps the frame buffer to display what was drawn
+        // sets the viewport size to window size and swaps the frame buffer to
+        // display what was drawn
         draw_opengl_screen(screen);
 
         delay(1000 / 60);

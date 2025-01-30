@@ -9,6 +9,7 @@ uniform vec3 lightDirection;
 uniform vec3 cameraLocation;
 uniform sampler2D text;
 uniform int isTexture;
+uniform float specMultiplier;
 void main() {
     // color = vec4(1.0f, 0.5f, 0.0f, 1.0f);
     float intensity = dot(lightDirection, theNormal);
@@ -17,7 +18,7 @@ void main() {
     // specular light
     vec3 vertexToEye = normalize(cameraLocation - pos);
     vec3 reflected = normalize(reflect(-lightDirection, theNormal));
-    float specFactor = pow(clamp(dot(vertexToEye, reflected), 0.0, 1.0), 100);
+    float specFactor = pow(clamp(dot(vertexToEye, reflected), 0.0, 1.0), 100) * specMultiplier;
 
     vec4 specColor = vec4(specFactor, specFactor, specFactor, 1.0);
 

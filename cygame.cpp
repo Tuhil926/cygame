@@ -115,9 +115,9 @@ CYScreen make_opengl_screen(int width, int height, float gui_scale,
     SDL_RenderSetLogicalSize(rend, width, height);
     global_width = width;
     global_height = height;
-    // SDL_SetWindowFullscreen(win, SDL_WINDOW_FULLSCREEN_DESKTOP);
     SDL_GL_MakeCurrent(get_global_window(), get_global_gl_context());
 
+    // SDL_SetWindowFullscreen(win, SDL_WINDOW_FULLSCREEN_DESKTOP);
     return rend;
 }
 
@@ -224,7 +224,8 @@ void clear_screen(CYScreen screen) {
 }
 
 void clear_opengl_screen(Color color) {
-    glClearColor(color.r, color.g, color.b, color.a);
+    glClearColor(color.r / 255.0, color.g / 255.0, color.b / 255.0,
+                 color.a / 255.0);
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 }
 
