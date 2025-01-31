@@ -1,4 +1,5 @@
 #include "cygame.h"
+#include "default_shaders.cpp"
 #include "glad/glad.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_float4x4.hpp"
@@ -6,6 +7,7 @@
 #include "glm/ext/vector_float3.hpp"
 #include <iostream>
 #include <iterator>
+#include <string>
 
 Camera::Camera() {
     position = glm::vec3(0, 0, 0);
@@ -18,20 +20,28 @@ Camera::Camera() {
 Camera::Camera(std::string vertex_shader_src_file_name,
                std::string fragment_shader_src_file_name)
     : Camera() {
+    std::string vertexShaderSrc;
+    std::string fragmentShaderSrc;
     std::ifstream vertexShaderFile(vertex_shader_src_file_name);
     if (!vertexShaderFile.is_open()) {
-        std::cerr << "Error: Unable to open vertex shader file" << std::endl;
-    }
-    std::string vertexShaderSrc(
-        (std::istreambuf_iterator<char>(vertexShaderFile)),
-        std::istreambuf_iterator<char>());
+        std::cerr << "Error: Unable to open vertex shader file, switching to "
+                     "default vertex shader"
+                  << std::endl;
+        vertexShaderSrc = default_vertex_shader;
+    } else
+        vertexShaderSrc =
+            std::string((std::istreambuf_iterator<char>(vertexShaderFile)),
+                        std::istreambuf_iterator<char>());
     std::ifstream fragmentShaderFile(fragment_shader_src_file_name);
     if (!fragmentShaderFile.is_open()) {
-        std::cerr << "Error: Unable to open fragment shader file" << std::endl;
-    }
-    std::string fragmentShaderSrc(
-        (std::istreambuf_iterator<char>(fragmentShaderFile)),
-        std::istreambuf_iterator<char>());
+        std::cerr << "Error: Unable to open fragment shader file, switching to "
+                     "default fragment shader"
+                  << std::endl;
+        fragmentShaderSrc = default_fragment_shader;
+    } else
+        fragmentShaderSrc =
+            std::string((std::istreambuf_iterator<char>(fragmentShaderFile)),
+                        std::istreambuf_iterator<char>());
 
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
     const char *vertex_src = vertexShaderSrc.c_str();

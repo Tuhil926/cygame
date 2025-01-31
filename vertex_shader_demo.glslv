@@ -1,8 +1,8 @@
 #version 410 core
-in layout(location = 0) vec3 position;
-in layout(location = 1) vec3 color;
-in layout(location = 2) vec3 normal;
-in layout(location = 3) vec2 texture_coord;
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 color;
+layout(location = 2) in vec3 normal;
+layout(location = 3) in vec2 texture_coord;
 
 uniform mat4 fullTransformMatrix;
 uniform mat4 rotationMatrix;

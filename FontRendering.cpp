@@ -1,6 +1,8 @@
 #include "cygame.h"
+#include "freetype/freetype.h"
 #include "glad/glad.h"
 #include <ostream>
+#include "fallback_font.cpp"
 
 Font::Font(std::string filename, int size) {
     this->size = size;
@@ -11,8 +13,12 @@ Font::Font(std::string filename, int size) {
     }
 
     if (FT_New_Face(ft, filename.c_str(), 0, &face)) {
-        std::cout << "ERROR::FREETYPE: Failed to load font" << std::endl;
-        return;
+        std::cout << "ERROR::FREETYPE: Failed to load font file, switching to default font" << std::endl;
+        if (FT_New_Memory_Face(ft, fonts_PixelOperator8_ttf, fonts_PixelOperator8_ttf_len, 0,
+                               &face)) {
+            std::cout << "ERROR::FREETYPE: Failed to load fallback font" << std::endl;
+            return;
+        }
     }
     FT_Set_Pixel_Sizes(face, 0, size);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
