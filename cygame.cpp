@@ -1,7 +1,7 @@
 #include "cygame.h"
 #include "SDL_events.h"
 #include "SDL_mouse.h"
-#include "SDL_video.h"
+// #include "SDL_video.h"
 #include "glad/glad.h"
 #include <iostream>
 #include <ostream>

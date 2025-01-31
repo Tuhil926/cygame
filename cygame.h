@@ -22,12 +22,12 @@
 #include FT_FREETYPE_H
 
 #include <SDL.h>
-#include <SDL2_gfxPrimitives.h>
-#include <SDL_image.h>
+// #include <SDL2_gfxPrimitives.h>
+// #include <SDL_image.h>
 #include <SDL_rect.h>
 #include <SDL_stdinc.h>
 #include <SDL_timer.h>
-#include <SDL_video.h>
+// #include <SDL_video.h>
 #include <glad/glad.h>
 
 #define QUIT SDL_QUIT
