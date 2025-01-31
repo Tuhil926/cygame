@@ -1,6 +1,6 @@
 all: build
 
-CYGAME_SRC_FILES := cygame.cpp Shape.cpp ShapeGenerator.cpp ShapeRenderer.cpp Camera.cpp Object.cpp UI.cpp FontRendering.cpp
+CYGAME_SRC_FILES := cygame.cpp Shape.cpp ShapeGenerator.cpp ShapeRenderer.cpp Camera.cpp Object.cpp UI.cpp FontRendering.cpp Image.cpp
 
 build: build/demo build/demo_opengl
 

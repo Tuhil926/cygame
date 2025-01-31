@@ -91,8 +91,6 @@
 #define Mouse_middle SDL_BUTTON_MMASK
 // add more cases when necessary please, I'm not doing the rest
 
-// typedef SDL_Renderer *CYScreen;
-typedef SDL_GLContext CYGLScreen;
 typedef const Uint8 *Keys;
 
 struct Color {
@@ -128,7 +126,7 @@ struct MouseState {
 int cygame_init();
 
 SDL_Window *get_global_window();
-CYGLScreen get_global_gl_context();
+SDL_GLContext get_global_gl_context();
 float get_global_width();
 float get_global_height();
 void set_global_dimensions_to_window_width();
@@ -232,6 +230,13 @@ class Font {
     void cleanup();
 };
 
+class Image {
+  public:
+    unsigned int texture_id;
+    int width, height, n;
+    Image(std::string filename);
+};
+
 class Camera {
   public:
     glm::vec3 position;
@@ -288,6 +293,9 @@ class Camera {
     void draw_triangle(Pos2D point1, Pos2D point2, Pos2D point3, Color color);
     void draw_rect(SDL_Rect rect, Color color);
     void draw_line(Pos2D pos1, Pos2D pos2, Color color, float width);
+    void draw_image_in_quad(Image &image, Pos2D point1, Pos2D point2,
+                            Pos2D point3, Pos2D point4);
+    void draw_image(Image &image, SDL_Rect rect);
 };
 
 class Object {

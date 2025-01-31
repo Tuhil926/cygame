@@ -24,11 +24,15 @@ void main() {
 
     if (isTexture == 0) {
         color = clamp(vec4(theColor, 1.0) * intensity_vec + specColor, 0.0, 1.0);
-    } else {
-        vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, textureCoord).r);
+    } else if (isTexture == 1){
+        // vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, textureCoord).r);
+        vec4 sampled = texture(text, textureCoord);
         color = clamp(vec4(theColor, 1.0) * intensity_vec + specColor, 0.0, 1.0) * sampled;
         // color = clamp(vec4(theColor, 1.0), 0.0, 1.0) * sampled;
         // color = clamp(vec4(theColor, 1.0), 0.0, 1.0);
+    } else {
+        vec4 sampled = vec4(1.0, 1.0, 1.0, texture(text, textureCoord).r);
+        color = clamp(vec4(theColor, 1.0) * intensity_vec + specColor, 0.0, 1.0) * sampled;
     }
     // color = clamp(specColor, 0.0, 1.0);
     // color = vec4(theColor, 1.0);

@@ -1,4 +1,5 @@
 #include "cygame.h"
+#include "glad/glad.h"
 
 using namespace std;
 using namespace glm;
@@ -50,6 +51,8 @@ int main() {
               &font, {0, 255, 255, 255});
     Button button1({50, 50, 100, 50}, "hello", &font, {150, 150, 60, 255},
                    {200, 200, 100, 255}, {255, 255, 150, 255}, NULL);
+
+    Image cat("images/sad_cat.png");
 
     while (running) {
         // you need to use this handle_event macro if you want to be able to use
@@ -105,10 +108,11 @@ int main() {
 
         button1.draw(camera);
 
-        camera.draw_line({100, 100}, {500, 500}, {255, 255, 255, 255}, 0.5);
+        camera.draw_line({50, 100}, {50, 500}, {255, 255, 255, 255}, 0.5);
 
-        camera.draw_circle({600, 600}, 50, {255, 0, 0, 255});
+        camera.draw_circle({50, 500}, 50, {255, 0, 0, 255});
 
+        camera.draw_image(cat, {904, 605, 100, 100});
         // cube_object_2.draw(camera);
 
         // sets the viewport size to window size and swaps the frame buffer to

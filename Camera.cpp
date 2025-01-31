@@ -366,7 +366,7 @@ void Camera::render_text(std::string text, float x, float y, glm::vec3 color,
                          Font *font) {
     float scale = 1.0;
     glActiveTexture(GL_TEXTURE0);
-    glUniform1i(is_texture_uniform_location, 1);
+    glUniform1i(is_texture_uniform_location, 2);
     glUniform1f(spec_multiplier_uniform_location, 0);
     glm::mat4 projection_matrix =
         glm::ortho(0.0f, get_global_width(), get_global_height(), 0.0f);
@@ -413,4 +413,18 @@ void Camera::render_text(std::string text, float x, float y, glm::vec3 color,
     glEnable(GL_DEPTH_TEST);
     glUniform1f(spec_multiplier_uniform_location, 1);
     glUniform1i(is_texture_uniform_location, 0);
+}
+
+void Camera::draw_image_in_quad(Image &image, Pos2D point1, Pos2D point2,
+                                Pos2D point3, Pos2D point4) {
+    glUniform1i(is_texture_uniform_location, 1);
+    glBindTexture(GL_TEXTURE_2D, image.texture_id);
+    draw_quad(point1, point2, point3, point4, {255, 255, 255, 255});
+    glUniform1i(is_texture_uniform_location, 0);
+}
+
+void Camera::draw_image(Image &image, SDL_Rect rect) {
+    float xpos = rect.x, ypos = rect.y, w = rect.w, h = rect.h;
+    draw_image_in_quad(image, {xpos + w, ypos + h}, {xpos, ypos + h},
+                       {xpos, ypos}, {xpos + w, ypos});
 }

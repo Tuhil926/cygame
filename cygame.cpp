@@ -17,11 +17,11 @@ int cygame_init() {
     return 0;
 }
 SDL_Window *global_window;
-CYGLScreen global_gl_context = NULL;
+SDL_GLContext global_gl_context = NULL;
 float global_width, global_height;
 
 SDL_Window *get_global_window() { return global_window; }
-CYGLScreen get_global_gl_context() { return global_gl_context; }
+SDL_GLContext get_global_gl_context() { return global_gl_context; }
 float get_global_width() { return global_width; }
 float get_global_height() { return global_height; }
 
