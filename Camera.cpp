@@ -206,6 +206,52 @@ void Camera::draw_circle(Pos2D pos, float radius, Color color) {
                get_default_circle(), {0.0f, 0.0f, 1.0f}, true);
     glUniform1f(spec_multiplier_uniform_location, 1);
 }
+void Camera::draw_triangle(Pos2D point1, Pos2D point2, Pos2D point3,
+                           Color color) {
+    float r = color.r / 255.0, g = color.g / 255.0, b = color.b / 255.0;
+    GLfloat verts[] = {
+        point1.x, point1.y, 1.0, //
+        /**/ r,   g,        b,   //
+        /**/ 0.0, 0.0,      1.0, //
+        /**/ 1.0, 1.0,           //
+        point2.x, point2.y, 1.0, //
+        /**/ r,   g,        b,   //
+        /**/ 0.0, 0.0,      1.0, //
+        /**/ 0.0, 1.0,           //
+        point3.x, point3.y, 1.0, //
+        /**/ r,   g,        b,   //
+        /**/ 0.0, 0.0,      1.0, //
+        /**/ 0.0, 0.0,           //
+    };
+    glm::mat4 projection_matrix =
+        glm::ortho(0.0f, get_global_width(), get_global_height(), 0.0f);
+    glm::mat4 rotation_matrix(1.0f);
+    glm::vec3 light_direction(0.0f, 0.0f, 1.0f);
+    glm::vec3 position_2d(0.0f, 0.0f, 1.0f);
+    glUniformMatrix4fv(full_transform_matrix_location, 1, GL_FALSE,
+                       &projection_matrix[0][0]);
+    glUniformMatrix4fv(rotation_matrix_uniform_location, 1, GL_FALSE,
+                       &rotation_matrix[0][0]);
+    glUniformMatrix4fv(model_to_world_matrix_uniform_location, 1, GL_FALSE,
+                       &projection_matrix[0][0]);
+    glUniform3fv(light_direction_uniform_location, 1, &light_direction[0]);
+    glUniform3fv(camera_location_uniform_location, 1, &position_2d[0]);
+    ShapeOnGPU default_rect = get_default_rect();
+    glBufferSubData(GL_ARRAY_BUFFER,
+                    default_rect.offset_vertices * NUM_FLOATS_PER_VERTEX *
+                        sizeof(GLfloat),
+                    (default_rect.num_vertices - 1) * NUM_FLOATS_PER_VERTEX *
+                        sizeof(GLfloat),
+                    verts);
+
+    glDisable(GL_DEPTH_TEST);
+    glUniform1f(spec_multiplier_uniform_location, 0);
+    // ShapeRenderer::render_shape(default_rect);
+    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT,
+                   (void *)(default_rect.offset_indices * sizeof(GLushort)));
+    glUniform1f(spec_multiplier_uniform_location, 1);
+    glEnable(GL_DEPTH_TEST);
+}
 
 void Camera::draw_quad(Pos2D point1, Pos2D point2, Pos2D point3, Pos2D point4,
                        Color color) {
@@ -225,6 +271,58 @@ void Camera::draw_quad(Pos2D point1, Pos2D point2, Pos2D point3, Pos2D point4,
         /**/ 0.0, 0.0,           //
         point4.x, point4.y, 1.0, //
         /**/ r,   g,        b,   //
+        /**/ 0.0, 0.0,      1.0, //
+        /**/ 1.0, 0.0,           //
+    };
+    glm::mat4 projection_matrix =
+        glm::ortho(0.0f, get_global_width(), get_global_height(), 0.0f);
+    glm::mat4 rotation_matrix(1.0f);
+    glm::vec3 light_direction(0.0f, 0.0f, 1.0f);
+    glm::vec3 position_2d(0.0f, 0.0f, 1.0f);
+    glUniformMatrix4fv(full_transform_matrix_location, 1, GL_FALSE,
+                       &projection_matrix[0][0]);
+    glUniformMatrix4fv(rotation_matrix_uniform_location, 1, GL_FALSE,
+                       &rotation_matrix[0][0]);
+    glUniformMatrix4fv(model_to_world_matrix_uniform_location, 1, GL_FALSE,
+                       &projection_matrix[0][0]);
+    glUniform3fv(light_direction_uniform_location, 1, &light_direction[0]);
+    glUniform3fv(camera_location_uniform_location, 1, &position_2d[0]);
+    ShapeOnGPU default_rect = get_default_rect();
+    glBufferSubData(
+        GL_ARRAY_BUFFER,
+        default_rect.offset_vertices * NUM_FLOATS_PER_VERTEX * sizeof(GLfloat),
+        default_rect.num_vertices * NUM_FLOATS_PER_VERTEX * sizeof(GLfloat),
+        verts);
+
+    glDisable(GL_DEPTH_TEST);
+    glUniform1f(spec_multiplier_uniform_location, 0);
+    ShapeRenderer::render_shape(default_rect);
+    glUniform1f(spec_multiplier_uniform_location, 1);
+    glEnable(GL_DEPTH_TEST);
+}
+void Camera::draw_gradient_quad(Pos2D point1, Pos2D point2, Pos2D point3,
+                                Pos2D point4, Color color1, Color color2,
+                                Color color3, Color color4) {
+
+    float r1 = color1.r / 255.0, g1 = color1.g / 255.0, b1 = color1.b / 255.0;
+    float r2 = color2.r / 255.0, g2 = color2.g / 255.0, b2 = color2.b / 255.0;
+    float r3 = color3.r / 255.0, g3 = color3.g / 255.0, b3 = color3.b / 255.0;
+    float r4 = color4.r / 255.0, g4 = color4.g / 255.0, b4 = color4.b / 255.0;
+    GLfloat verts[] = {
+        point1.x, point1.y, 1.0, //
+        /**/ r1,  g1,       b1,  //
+        /**/ 0.0, 0.0,      1.0, //
+        /**/ 1.0, 1.0,           //
+        point2.x, point2.y, 1.0, //
+        /**/ r2,  g2,       b2,  //
+        /**/ 0.0, 0.0,      1.0, //
+        /**/ 0.0, 1.0,           //
+        point3.x, point3.y, 1.0, //
+        /**/ r3,  g3,       b3,  //
+        /**/ 0.0, 0.0,      1.0, //
+        /**/ 0.0, 0.0,           //
+        point4.x, point4.y, 1.0, //
+        /**/ r4,  g4,       b4,  //
         /**/ 0.0, 0.0,      1.0, //
         /**/ 1.0, 0.0,           //
     };

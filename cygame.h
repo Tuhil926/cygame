@@ -27,7 +27,7 @@
 #include <SDL_rect.h>
 #include <SDL_stdinc.h>
 #include <SDL_timer.h>
-#include <SDL_ttf.h>
+// #include <SDL_ttf.h>
 #include <SDL_video.h>
 #include <glad/glad.h>
 
@@ -92,7 +92,7 @@
 #define Mouse_middle SDL_BUTTON_MMASK
 // add more cases when necessary please, I'm not doing the rest
 
-typedef SDL_Renderer *CYScreen;
+// typedef SDL_Renderer *CYScreen;
 typedef SDL_GLContext CYGLScreen;
 typedef const Uint8 *Keys;
 
@@ -134,34 +134,36 @@ float get_global_width();
 float get_global_height();
 void set_global_dimensions_to_window_width();
 
-CYScreen make_screen(int width, int height, float gui_scale = 1,
-                     const char *title = "Game");
-CYScreen make_opengl_screen(int width, int height, float gui_scale,
-                            const char *title = "Opengl Game");
+// CYScreen make_screen(int width, int height, float gui_scale = 1,
+//                      const char *title = "Game");
+void make_screen(int width, int height, float gui_scale,
+                 const char *title = "Opengl Game");
 
-void draw_rect(SDL_Rect rect, CYScreen screen, Color color);
+// void draw_rect(SDL_Rect rect, CYScreen screen, Color color);
 
-void fill_rect(SDL_Rect rect, CYScreen screen, Color color);
+// void fill_rect(SDL_Rect rect, CYScreen screen, Color color);
 
-void draw_line(CYScreen screen, Pos2D pos1, Pos2D pos2, Color color, int width);
+// void draw_line(CYScreen screen, Pos2D pos1, Pos2D pos2, Color color, int
+// width);
 
-void draw_polygon(CYScreen screen, std::vector<Pos2D> vertices, Color color);
+// void draw_polygon(CYScreen screen, std::vector<Pos2D> vertices, Color color);
 
-void draw_gradient_polygon(CYScreen screen, std::vector<SDL_Vertex> vertices);
+// void draw_gradient_polygon(CYScreen screen, std::vector<SDL_Vertex>
+// vertices);
 
 Keys get_keys_pressed();
 
 void delay(int m);
 
-void clear_screen(CYScreen screen);
+// void clear_screen(CYScreen screen);
 
-void clear_opengl_screen(Color color);
+void clear_screen(Color color);
 
-void draw_screen(CYScreen screen);
+// void draw_screen(CYScreen screen);
 
-void switch_to_2d_rendering();
+// void switch_to_2d_rendering();
 
-void draw_opengl_screen(CYScreen screen);
+void draw_screen();
 
 float get_global_aspect_ratio();
 
@@ -172,10 +174,10 @@ bool collide_rect(SDL_Rect rect, Pos2D point);
 
 bool collide_rects(SDL_Rect rect1, SDL_Rect rect2);
 
-int draw_centered_text(CYScreen screen, TTF_Font *font, std::string text,
-                       Pos2D pos_center, Color color);
+// int draw_centered_text(CYScreen screen, TTF_Font *font, std::string text,
+//                        Pos2D pos_center, Color color);
 
-void draw_aa_circle(CYScreen screen, Pos2D pos, int radius, Color color);
+// void draw_aa_circle(CYScreen screen, Pos2D pos, int radius, Color color);
 
 #define NUM_FLOATS_PER_VERTEX 11
 
@@ -300,6 +302,10 @@ class Camera {
                      Font *font);
     void draw_quad(Pos2D point1, Pos2D point2, Pos2D point3, Pos2D point4,
                    Color color);
+    void draw_gradient_quad(Pos2D point1, Pos2D point2, Pos2D point3,
+                            Pos2D point4, Color color1, Color color2,
+                            Color color3, Color color4);
+    void draw_triangle(Pos2D point1, Pos2D point2, Pos2D point3, Color color);
     void draw_rect(SDL_Rect rect, Color color);
     void draw_line(Pos2D pos1, Pos2D pos2, Color color, float width);
 };

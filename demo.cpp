@@ -14,15 +14,17 @@ int main() {
     cygame_init();
 
     // The sdl renderer. everything will be drawn onto this.
-    CYScreen screen = make_opengl_screen(1000, 700, 1, "CYGame demo!");
-
-    bool running = true;
+    make_screen(1000, 700, 1, "CYGame demo!");
 
     // just some stuff for demo purposes
     int x = 0, y = 0;
 
     unsigned char rd = 100;
 
+    // This is a font. You can create just one or two fonts and use it for all
+    // consequent objects. I don't recommend creating one font per object, as
+    // this can be expensive. I'll later add support for fonts to be scaled so
+    // that you can just create one large font and use it to render everything.
     Font font("fonts/PixelOperator8.ttf", 24);
 
     Button button =
@@ -36,7 +38,7 @@ int main() {
                             {255, 255, 255, 255}, 40);
     Text text = Text({100, 600}, "This is some text", &font,
                      {100, 100, 255, 255}, false, true);
-    Text text2 = Text({500, 50}, "Sum", &font, {100, 100, 255, 255}, screen);
+    Text text2 = Text({500, 50}, "Sum", &font, {100, 100, 255, 255});
 
     Camera camera("vertex_shader_demo.glslv", "fragment_shader_demo.glslf");
 
@@ -46,6 +48,7 @@ int main() {
     ShapeRenderer renderer;
     renderer.send_shapes();
 
+    bool running = true;
     while (running) {
         // you need to use this handle_event macro if you want to be able to use
         // the input box. don't ask me why. It's just convenient and easier than
@@ -103,26 +106,16 @@ int main() {
         // you need to clear the screen every frame, or things will create
         // trails of their previous renders. you can comment this out to see
         // what I mean
-        clear_opengl_screen({60, 60, 60, 255});
+        clear_screen({60, 60, 60, 255});
 
         camera.draw_rect({x, y, 100, 100},
                          {rd, rd, (unsigned char)(255 - rd), 255});
-        //
-        // draw_gradient_polygon(
-        //     screen, {{{slider.value * 8, slider2.value * 7},
-        //               {255, 255, 0, 255},
-        //               {0, 0}},
-        //              {{350, (float)(350 - slider2.value * 4) + 175},
-        //               {100, 255, 0, 255},
-        //               {0, 0}},
-        //              {{slider.value * 3 + slider2.value * 2, 600},
-        //               {200, 100, 0, 255},
-        //               {0, 0}},
-        //              {{slider.value * 1, 600}, {200, 0, 0, 255}, {0, 0}}});
-        camera.draw_quad({slider.value * 8, slider2.value * 7},
-                         {350, (float)(350 - slider2.value * 4) + 175},
-                         {slider.value * 3 + slider2.value * 2, 600},
-                         {slider.value * 1, 600}, {255, 255, 0, 255});
+        camera.draw_gradient_quad({slider.value * 8, slider2.value * 7},
+                                  {350, (float)(350 - slider2.value * 4) + 175},
+                                  {slider.value * 3 + slider2.value * 2, 600},
+                                  {slider.value * 1, 600}, {255, 255, 0, 255},
+                                  {100, 255, 0, 255}, {200, 100, 0, 255},
+                                  {200, 0, 0, 255});
 
         // every object also has a draw method that you need to call. if you
         // don't want to draw it, don't call the method.
@@ -137,7 +130,7 @@ int main() {
         // finally, you need to call draw_screen to show the stuff onto the
         // screen.
         // draw_screen(screen);
-        draw_opengl_screen(screen);
+        draw_screen();
 
         delay(1000 / 60);
     }

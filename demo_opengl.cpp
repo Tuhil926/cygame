@@ -10,7 +10,7 @@ int main() {
     // initialises sdl.
     cygame_init();
 
-    auto screen = make_opengl_screen(1000, 700, 1, "Cygame opengl demo!");
+    make_screen(1000, 700, 1, "Cygame opengl demo!");
     bool running = true;
 
     Shape *cube = ShapeGenerator::get_cube();
@@ -91,7 +91,7 @@ int main() {
 
         // drawing things
 
-        clear_opengl_screen({0, 0, 0, 0});
+        clear_screen({0, 0, 0, 0});
 
         sphere_object.draw(camera);
         cube_object.draw(camera);
@@ -113,7 +113,7 @@ int main() {
 
         // sets the viewport size to window size and swaps the frame buffer to
         // display what was drawn
-        draw_opengl_screen(screen);
+        draw_screen();
 
         delay(1000 / 60);
     }
