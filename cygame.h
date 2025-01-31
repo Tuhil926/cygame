@@ -266,11 +266,17 @@ class Camera {
     void track_input(Keys keys, MouseState mouse_state, float dt);
     void toggle_minecraft_rotation();
     // void draw_shape(glm::mat4 full_transform_matrix, ShapeOnGPU shape_gpu);
+    void send_uniforms(glm::mat4 &full_transform_matrix,
+                       glm::mat4 &model_rotation_matrix,
+                       glm::mat4 &model_to_world_matrix,
+                       glm::vec3 &light_direction, glm::vec3 &camera_position);
     void draw_shape(glm::mat4 model_translation_matrix,
                     glm::mat4 model_scale_matrix,
                     glm::mat4 model_rotation_matrix, ShapeOnGPU shape_gpu,
                     glm::vec3 light_direction = {1.0f, 3.0f, 2.0f},
                     bool is_2D = false);
+    void send_data_to_GPU(ShapeOnGPU shape_on_gpu, GLfloat verts[]);
+    void draw_2D_shape(ShapeOnGPU shape_on_gpu);
     void draw_circle(Pos2D pos, float radius, Color color);
     void render_text(std::string text, float x, float y, glm::vec3 color,
                      Font *font);

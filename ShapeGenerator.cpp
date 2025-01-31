@@ -157,24 +157,6 @@ Shape *ShapeGenerator::get_rect() {
         /**/ 0.0,  0.0,  1.0, //
         /**/ 1.0,  -1.0,      //
     };
-    // GLfloat verts[] = {
-    //     xpos + w,  ypos + h, 0.0, //
-    //     /**/ 1.0,  1.0,      1.0, //
-    //     /**/ 0.0,  0.0,      1.0, //
-    //     /**/ 1.0,  1.0,           //
-    //     xpos,      ypos + h, 0.0, // top face
-    //     /**/ 1.0,  1.0,      1.0, //
-    //     /**/ 0.0,  0.0,      1.0, //
-    //     /**/ -1.0, 1.0,           //
-    //     xpos,      ypos,     0.0, //
-    //     /**/ 1.0,  1.0,      1.0, //
-    //     /**/ 0.0,  0.0,      1.0, //
-    //     /**/ -1.0, -1.0,          //
-    //     xpos + w,  ypos,     0.0, //
-    //     /**/ 1.0,  1.0,      1.0, //
-    //     /**/ 0.0,  0.0,      1.0, //
-    //     /**/ 1.0,  -1.0,          //
-    // };
     GLushort inds[] = {0, 2, 1, 2, 0, 3};
     ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
     ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
@@ -367,49 +349,6 @@ Shape *ShapeGenerator::get_sphere(int num_verts_in_circle, int num_circles) {
     ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
     memcpy(ret->vertices, verts.data(), ret->get_size_bytes());
     memcpy(ret->indices, inds.data(), ret->get_indices_size_bytes());
-    return ret;
-}
-
-// don't use this, these don't have normals, and i'm too lazy to add them lol
-Shape *ShapeGenerator::get_triangle() {
-    Shape *ret = new Shape();
-    ret->vertex_count = 3;
-    ret->index_count = 3;
-    ret->num_floats_per_vertex = 6;
-    GLfloat verts[] = {
-        0.0f,  1.0f,  -1.0f, // vertex1
-        1.0f,  0.0f,  0.0f,  // color1
-        1.0f,  -1.0f, 0.0f,  // vertex2
-        0.0f,  1.0f,  0.0f,  // color2
-        -1.0f, -1.0f, 0.0f,  // vertex3
-        0.0f,  0.0f,  1.0f   // color3
-    };
-    GLushort inds[] = {0, 1, 2};
-    ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
-    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
-    memcpy(ret->vertices, verts, ret->get_size_bytes());
-    memcpy(ret->indices, inds, ret->get_indices_size_bytes());
-    return ret;
-}
-// don't use this, these don't have normals, and i'm too lazy to add them lol
-Shape *ShapeGenerator::get_triangle2() {
-    Shape *ret = new Shape();
-    ret->vertex_count = 3;
-    ret->index_count = 3;
-    ret->num_floats_per_vertex = 6;
-    GLfloat verts[] = {
-        -1.0f, 1.0f,  0.0f,  // vertex1
-        1.0f,  0.0f,  0.0f,  // color1
-        1.0f,  1.0f,  0.0f,  // vertex2
-        0.0f,  1.0f,  0.0f,  // color2
-        0.0f,  -1.0f, -1.0f, // vertex3
-        0.0f,  0.0f,  1.0f   // color3
-    };
-    GLushort inds[] = {0, 1, 2};
-    ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
-    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
-    memcpy(ret->vertices, verts, ret->get_size_bytes());
-    memcpy(ret->indices, inds, ret->get_indices_size_bytes());
     return ret;
 }
 

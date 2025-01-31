@@ -167,6 +167,22 @@ void Camera::toggle_minecraft_rotation() {
         SDL_ShowCursor(SDL_ENABLE);
     }
 }
+
+void Camera::send_uniforms(glm::mat4 &full_transform_matrix,
+                           glm::mat4 &model_rotation_matrix,
+                           glm::mat4 &model_to_world_matrix,
+                           glm::vec3 &light_direction,
+                           glm::vec3 &camera_position) {
+    glUniformMatrix4fv(full_transform_matrix_location, 1, GL_FALSE,
+                       &full_transform_matrix[0][0]);
+    glUniformMatrix4fv(rotation_matrix_uniform_location, 1, GL_FALSE,
+                       &model_rotation_matrix[0][0]);
+    glUniformMatrix4fv(model_to_world_matrix_uniform_location, 1, GL_FALSE,
+                       &model_to_world_matrix[0][0]);
+    glUniform3fv(light_direction_uniform_location, 1, &light_direction[0]);
+    glUniform3fv(camera_location_uniform_location, 1, &camera_position[0]);
+}
+
 void Camera::draw_shape(glm::mat4 model_translation_matrix,
                         glm::mat4 model_scale_matrix,
                         glm::mat4 model_rotation_matrix, ShapeOnGPU shape_gpu,
@@ -184,15 +200,17 @@ void Camera::draw_shape(glm::mat4 model_translation_matrix,
     glm::mat4 model_to_world_matrix =
         model_translation_matrix * model_rotation_matrix * model_scale_matrix;
     light_direction = glm::normalize(light_direction);
-    glUniformMatrix4fv(full_transform_matrix_location, 1, GL_FALSE,
-                       &full_transform_matrix[0][0]);
-    glUniformMatrix4fv(rotation_matrix_uniform_location, 1, GL_FALSE,
-                       &model_rotation_matrix[0][0]);
-    glUniformMatrix4fv(model_to_world_matrix_uniform_location, 1, GL_FALSE,
-                       &model_to_world_matrix[0][0]);
-    glUniform3fv(light_direction_uniform_location, 1, &light_direction[0]);
-    glUniform3fv(camera_location_uniform_location, 1, &position[0]);
+    send_uniforms(full_transform_matrix, model_rotation_matrix,
+                  model_to_world_matrix, light_direction, position);
     ShapeRenderer::render_shape(shape_gpu);
+}
+
+void Camera::draw_2D_shape(ShapeOnGPU shape_on_gpu) {
+    glDisable(GL_DEPTH_TEST);
+    glUniform1f(spec_multiplier_uniform_location, 0);
+    ShapeRenderer::render_shape(shape_on_gpu);
+    glUniform1f(spec_multiplier_uniform_location, 1);
+    glEnable(GL_DEPTH_TEST);
 }
 
 void Camera::draw_circle(Pos2D pos, float radius, Color color) {
@@ -206,6 +224,15 @@ void Camera::draw_circle(Pos2D pos, float radius, Color color) {
                get_default_circle(), {0.0f, 0.0f, 1.0f}, true);
     glUniform1f(spec_multiplier_uniform_location, 1);
 }
+
+void Camera::send_data_to_GPU(ShapeOnGPU shape_on_gpu, GLfloat verts[]) {
+    glBufferSubData(
+        GL_ARRAY_BUFFER,
+        shape_on_gpu.offset_vertices * NUM_FLOATS_PER_VERTEX * sizeof(GLfloat),
+        shape_on_gpu.num_vertices * NUM_FLOATS_PER_VERTEX * sizeof(GLfloat),
+        verts);
+}
+
 void Camera::draw_triangle(Pos2D point1, Pos2D point2, Pos2D point3,
                            Color color) {
     float r = color.r / 255.0, g = color.g / 255.0, b = color.b / 255.0;
@@ -228,29 +255,14 @@ void Camera::draw_triangle(Pos2D point1, Pos2D point2, Pos2D point3,
     glm::mat4 rotation_matrix(1.0f);
     glm::vec3 light_direction(0.0f, 0.0f, 1.0f);
     glm::vec3 position_2d(0.0f, 0.0f, 1.0f);
-    glUniformMatrix4fv(full_transform_matrix_location, 1, GL_FALSE,
-                       &projection_matrix[0][0]);
-    glUniformMatrix4fv(rotation_matrix_uniform_location, 1, GL_FALSE,
-                       &rotation_matrix[0][0]);
-    glUniformMatrix4fv(model_to_world_matrix_uniform_location, 1, GL_FALSE,
-                       &projection_matrix[0][0]);
-    glUniform3fv(light_direction_uniform_location, 1, &light_direction[0]);
-    glUniform3fv(camera_location_uniform_location, 1, &position_2d[0]);
+    send_uniforms(projection_matrix, rotation_matrix, projection_matrix,
+                  light_direction, position_2d);
     ShapeOnGPU default_rect = get_default_rect();
-    glBufferSubData(GL_ARRAY_BUFFER,
-                    default_rect.offset_vertices * NUM_FLOATS_PER_VERTEX *
-                        sizeof(GLfloat),
-                    (default_rect.num_vertices - 1) * NUM_FLOATS_PER_VERTEX *
-                        sizeof(GLfloat),
-                    verts);
+    default_rect.num_indices = 3;
+    default_rect.num_vertices = 3;
+    send_data_to_GPU(default_rect, verts);
 
-    glDisable(GL_DEPTH_TEST);
-    glUniform1f(spec_multiplier_uniform_location, 0);
-    // ShapeRenderer::render_shape(default_rect);
-    glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_SHORT,
-                   (void *)(default_rect.offset_indices * sizeof(GLushort)));
-    glUniform1f(spec_multiplier_uniform_location, 1);
-    glEnable(GL_DEPTH_TEST);
+    draw_2D_shape(default_rect);
 }
 
 void Camera::draw_quad(Pos2D point1, Pos2D point2, Pos2D point3, Pos2D point4,
@@ -279,26 +291,12 @@ void Camera::draw_quad(Pos2D point1, Pos2D point2, Pos2D point3, Pos2D point4,
     glm::mat4 rotation_matrix(1.0f);
     glm::vec3 light_direction(0.0f, 0.0f, 1.0f);
     glm::vec3 position_2d(0.0f, 0.0f, 1.0f);
-    glUniformMatrix4fv(full_transform_matrix_location, 1, GL_FALSE,
-                       &projection_matrix[0][0]);
-    glUniformMatrix4fv(rotation_matrix_uniform_location, 1, GL_FALSE,
-                       &rotation_matrix[0][0]);
-    glUniformMatrix4fv(model_to_world_matrix_uniform_location, 1, GL_FALSE,
-                       &projection_matrix[0][0]);
-    glUniform3fv(light_direction_uniform_location, 1, &light_direction[0]);
-    glUniform3fv(camera_location_uniform_location, 1, &position_2d[0]);
+    send_uniforms(projection_matrix, rotation_matrix, projection_matrix,
+                  light_direction, position_2d);
     ShapeOnGPU default_rect = get_default_rect();
-    glBufferSubData(
-        GL_ARRAY_BUFFER,
-        default_rect.offset_vertices * NUM_FLOATS_PER_VERTEX * sizeof(GLfloat),
-        default_rect.num_vertices * NUM_FLOATS_PER_VERTEX * sizeof(GLfloat),
-        verts);
+    send_data_to_GPU(default_rect, verts);
 
-    glDisable(GL_DEPTH_TEST);
-    glUniform1f(spec_multiplier_uniform_location, 0);
-    ShapeRenderer::render_shape(default_rect);
-    glUniform1f(spec_multiplier_uniform_location, 1);
-    glEnable(GL_DEPTH_TEST);
+    draw_2D_shape(default_rect);
 }
 void Camera::draw_gradient_quad(Pos2D point1, Pos2D point2, Pos2D point3,
                                 Pos2D point4, Color color1, Color color2,
@@ -331,26 +329,12 @@ void Camera::draw_gradient_quad(Pos2D point1, Pos2D point2, Pos2D point3,
     glm::mat4 rotation_matrix(1.0f);
     glm::vec3 light_direction(0.0f, 0.0f, 1.0f);
     glm::vec3 position_2d(0.0f, 0.0f, 1.0f);
-    glUniformMatrix4fv(full_transform_matrix_location, 1, GL_FALSE,
-                       &projection_matrix[0][0]);
-    glUniformMatrix4fv(rotation_matrix_uniform_location, 1, GL_FALSE,
-                       &rotation_matrix[0][0]);
-    glUniformMatrix4fv(model_to_world_matrix_uniform_location, 1, GL_FALSE,
-                       &projection_matrix[0][0]);
-    glUniform3fv(light_direction_uniform_location, 1, &light_direction[0]);
-    glUniform3fv(camera_location_uniform_location, 1, &position_2d[0]);
+    send_uniforms(projection_matrix, rotation_matrix, projection_matrix,
+                  light_direction, position_2d);
     ShapeOnGPU default_rect = get_default_rect();
-    glBufferSubData(
-        GL_ARRAY_BUFFER,
-        default_rect.offset_vertices * NUM_FLOATS_PER_VERTEX * sizeof(GLfloat),
-        default_rect.num_vertices * NUM_FLOATS_PER_VERTEX * sizeof(GLfloat),
-        verts);
+    send_data_to_GPU(default_rect, verts);
 
-    glDisable(GL_DEPTH_TEST);
-    glUniform1f(spec_multiplier_uniform_location, 0);
-    ShapeRenderer::render_shape(default_rect);
-    glUniform1f(spec_multiplier_uniform_location, 1);
-    glEnable(GL_DEPTH_TEST);
+    draw_2D_shape(default_rect);
 }
 
 void Camera::draw_rect(SDL_Rect rect, Color color) {
@@ -379,14 +363,8 @@ void Camera::render_text(std::string text, float x, float y, glm::vec3 color,
     glm::mat4 rotation_matrix(1.0f);
     glm::vec3 light_direction(0.0f, 0.0f, 1.0f);
     glm::vec3 position_2d(0.0f, 0.0f, 1.0f);
-    glUniformMatrix4fv(full_transform_matrix_location, 1, GL_FALSE,
-                       &projection_matrix[0][0]);
-    glUniformMatrix4fv(rotation_matrix_uniform_location, 1, GL_FALSE,
-                       &rotation_matrix[0][0]);
-    glUniformMatrix4fv(model_to_world_matrix_uniform_location, 1, GL_FALSE,
-                       &projection_matrix[0][0]);
-    glUniform3fv(light_direction_uniform_location, 1, &light_direction[0]);
-    glUniform3fv(camera_location_uniform_location, 1, &position_2d[0]);
+    send_uniforms(projection_matrix, rotation_matrix, projection_matrix,
+                  light_direction, position_2d);
     glDisable(GL_DEPTH_TEST);
     for (char c : text) {
         Character character = font->characters[c];
@@ -396,15 +374,12 @@ void Camera::render_text(std::string text, float x, float y, glm::vec3 color,
         float w = character.size.x * scale;
         float h = character.size.y * scale;
 
-        // std::cout << xpos << " " << ypos << " " << w << ' ' << h <<
-        // std::endl;
-
         GLfloat verts[] = {
             xpos + w,     ypos + h, 1.0,     //
             /**/ color.r, color.g,  color.b, //
             /**/ 0.0,     0.0,      1.0,     //
             /**/ 1.0,     1.0,               //
-            xpos,         ypos + h, 1.0,     // top face
+            xpos,         ypos + h, 1.0,     //
             /**/ color.r, color.g,  color.b, //
             /**/ 0.0,     0.0,      1.0,     //
             /**/ 0.0,     1.0,               //
@@ -420,12 +395,7 @@ void Camera::render_text(std::string text, float x, float y, glm::vec3 color,
         // GLushort inds[] = {0, 1, 2, 2, 3, 0};
         ShapeOnGPU default_rect = get_default_rect();
         glBindTexture(GL_TEXTURE_2D, character.TextureID);
-        glBufferSubData(GL_ARRAY_BUFFER,
-                        default_rect.offset_vertices * NUM_FLOATS_PER_VERTEX *
-                            sizeof(GLfloat),
-                        default_rect.num_vertices * NUM_FLOATS_PER_VERTEX *
-                            sizeof(GLfloat),
-                        verts);
+        send_data_to_GPU(default_rect, verts);
 
         x += (character.advance >> 6) * scale;
         ShapeRenderer::render_shape(default_rect);

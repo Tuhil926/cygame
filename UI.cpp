@@ -227,54 +227,6 @@ void Text::draw(Camera &camera) {
                        font);
 }
 
-// StaticText::StaticText(Pos2D pos, std::string text, int font_size,
-//                        Color text_color, CYScreen screen,
-//                        bool centered_horizontal, bool centered_vertical,
-//                        bool has_background, Color background_color) {
-//     this->pos = pos;
-//     this->text = text;
-//     this->color = background_color;
-//     this->text_color = text_color;
-//     this->font_size = font_size;
-//     this->screen = screen;
-//     font = TTF_OpenFont(DEFAULT_FONT, font_size);
-//     text_surface = TTF_RenderText_Solid(font, text.c_str(), color);
-//     // text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
-//     pos_rect = {(int)(pos.x - (text_surface->w / 2.0f) *
-//     centered_horizontal),
-//                 (int)(pos.y - (text_surface->h / 2.0f) * centered_vertical),
-//                 text_surface->w, text_surface->h};
-// }
-// StaticText::~StaticText() {
-//     SDL_FreeSurface(text_surface);
-//     SDL_DestroyTexture(text_texture);
-// }
-//
-// void StaticText::change_font_size(int font_size) {
-//     this->font_size = font_size;
-//     font = TTF_OpenFont(DEFAULT_FONT, font_size);
-// }
-//
-// void StaticText::set_text(std::string new_text) {
-//     text = new_text;
-//     re_render();
-// }
-// // re-initialises the rendered font. Call this when you change the text,
-// // color or position
-// void StaticText::re_render() {
-//     SDL_FreeSurface(text_surface);
-//     SDL_DestroyTexture(text_texture);
-//     text_surface = TTF_RenderText_Solid(font, text.c_str(), color);
-//     text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
-//     // text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
-//     pos_rect = {(int)(pos.x - text_surface->w / 2.0f),
-//                 (int)(pos.y - text_surface->h / 2.0f), text_surface->w,
-//                 text_surface->h};
-// }
-// void StaticText::draw() {
-//     SDL_RenderCopy(screen, text_texture, NULL, &pos_rect);
-// }
-
 void _select(void *arg) {
     selector_args *s = (selector_args *)arg;
     s->selector->selected = s->selected;
@@ -311,21 +263,11 @@ void Selector::draw(Camera &camera) {
         for (int i = 0; i < options.size(); i++) {
             buttons[i].draw(camera);
         }
-        // draw_polygon(screen,
-        //              {arrow_center + Pos2D{0., -4.},
-        //               arrow_center + Pos2D{6., 4.},
-        //               arrow_center + Pos2D{-6., 4.}},
-        //              {50, 50, 50, 255});
         camera.draw_quad(arrow_center + Pos2D{0., -4.},
                          arrow_center + Pos2D{6., 4.},
                          arrow_center + Pos2D{6., 4.},
                          arrow_center + Pos2D{-6., 4.}, {50, 50, 50, 255});
     } else {
-        // draw_polygon(screen,
-        //              {arrow_center + Pos2D{0., 4.},
-        //               arrow_center + Pos2D{6., -4.},
-        //               arrow_center + Pos2D{-6., -4.}},
-        //              {50, 50, 50, 255});
         camera.draw_quad(arrow_center + Pos2D{6., -4.},
                          arrow_center + Pos2D{0., 4.},
                          arrow_center + Pos2D{0., 4.},
