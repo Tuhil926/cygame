@@ -1,7 +1,9 @@
 #include "cygame.h"
 #include "glad/glad.h"
+#include "glm/ext/scalar_constants.hpp"
 #include "glm/ext/vector_float2.hpp"
 #include "glm/ext/vector_float3.hpp"
+#include "glm/gtc/constants.hpp"
 #include <cassert>
 #include <cstdio>
 #include <fstream>
@@ -115,7 +117,7 @@ Shape *ShapeGenerator::get_cube() {
         /**/ 0.0,  -1.0, 0.0,  //
         /**/ 0.0,  0.0,        //
     };
-    GLushort inds[] = {
+    GLuint inds[] = {
         0,  1,  2,  2,  3,  0,  //
         4,  6,  5,  6,  4,  7,  //
         8,  9,  10, 10, 11, 8,  //
@@ -124,7 +126,7 @@ Shape *ShapeGenerator::get_cube() {
         20, 21, 22, 22, 23, 20  //
     };
     ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
-    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
+    ret->indices = (GLuint *)malloc(ret->get_indices_size_bytes());
     memcpy(ret->vertices, verts, ret->get_size_bytes());
     memcpy(ret->indices, inds, ret->get_indices_size_bytes());
     return ret;
@@ -157,9 +159,9 @@ Shape *ShapeGenerator::get_rect() {
         /**/ 0.0,  0.0,  1.0, //
         /**/ 1.0,  -1.0,      //
     };
-    GLushort inds[] = {0, 2, 1, 2, 0, 3};
+    GLuint inds[] = {0, 2, 1, 2, 0, 3};
     ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
-    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
+    ret->indices = (GLuint *)malloc(ret->get_indices_size_bytes());
     memcpy(ret->vertices, verts, ret->get_size_bytes());
     memcpy(ret->indices, inds, ret->get_indices_size_bytes());
     return ret;
@@ -171,7 +173,7 @@ Shape *ShapeGenerator::get_circle(int num_vertices) {
     ret->index_count = 3 * num_vertices;
     ret->num_floats_per_vertex = NUM_FLOATS_PER_VERTEX;
     std::vector<GLfloat> verts;
-    std::vector<GLushort> inds;
+    std::vector<GLuint> inds;
     glm::vec4 vert(1.0f, 0.0f, 0.0f, 0.0f);
     float y_angle = 0.0f;
     for (int j = 0; j < num_vertices; j++) {
@@ -227,7 +229,7 @@ Shape *ShapeGenerator::get_circle(int num_vertices) {
     assert(verts.size() == ret->vertex_count * NUM_FLOATS_PER_VERTEX);
     assert(inds.size() == ret->index_count);
     ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
-    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
+    ret->indices = (GLuint *)malloc(ret->get_indices_size_bytes());
     memcpy(ret->vertices, verts.data(), ret->get_size_bytes());
     memcpy(ret->indices, inds.data(), ret->get_indices_size_bytes());
     return ret;
@@ -242,7 +244,7 @@ Shape *ShapeGenerator::get_sphere(int num_verts_in_circle, int num_circles) {
                        2 * num_verts_in_circle * 3;
     ret->num_floats_per_vertex = NUM_FLOATS_PER_VERTEX;
     std::vector<GLfloat> verts;
-    std::vector<GLushort> inds;
+    std::vector<GLuint> inds;
     float angle = -glm::half_pi<float>();
     for (int i = 0; i < num_circles; i++) {
         glm::vec4 vert(1.0f, 0.0f, 0.0f, 0.0f);
@@ -271,8 +273,8 @@ Shape *ShapeGenerator::get_sphere(int num_verts_in_circle, int num_circles) {
 
             // text_coord
 
-            verts.push_back(0);
-            verts.push_back(0);
+            verts.push_back(y_angle / glm::two_pi<float>());
+            verts.push_back((1 - new_vert.y) / 2.0f);
 
             y_angle += glm::two_pi<float>() / (float)num_verts_in_circle;
         }
@@ -290,7 +292,7 @@ Shape *ShapeGenerator::get_sphere(int num_verts_in_circle, int num_circles) {
     verts.push_back(1.0);
     verts.push_back(0.0);
 
-    verts.push_back(0);
+    verts.push_back(0.5);
     verts.push_back(0);
 
     // bottom vertex
@@ -306,8 +308,8 @@ Shape *ShapeGenerator::get_sphere(int num_verts_in_circle, int num_circles) {
     verts.push_back(-1.0);
     verts.push_back(0.0);
 
-    verts.push_back(0);
-    verts.push_back(0);
+    verts.push_back(0.5);
+    verts.push_back(1);
 
     for (int circle_ind = 0; circle_ind < num_circles - 1; circle_ind++) {
         for (int vert_ind = 0; vert_ind < num_verts_in_circle; vert_ind++) {
@@ -346,7 +348,7 @@ Shape *ShapeGenerator::get_sphere(int num_verts_in_circle, int num_circles) {
     assert(verts.size() == ret->vertex_count * NUM_FLOATS_PER_VERTEX);
     assert(inds.size() == ret->index_count);
     ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
-    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
+    ret->indices = (GLuint *)malloc(ret->get_indices_size_bytes());
     memcpy(ret->vertices, verts.data(), ret->get_size_bytes());
     memcpy(ret->indices, inds.data(), ret->get_indices_size_bytes());
     return ret;
@@ -387,7 +389,7 @@ Shape *ShapeGenerator::get_from_file(std::string filename) {
     std::vector<glm::vec3> obj_normals;
     std::vector<glm::vec2> obj_texture_coords;
     std::vector<GLfloat> verts;
-    std::vector<GLushort> indices;
+    std::vector<GLuint> indices;
     std::map<std::string, Material> materials;
     int num_verts = 0;
     Material curr_material;
@@ -419,7 +421,7 @@ Shape *ShapeGenerator::get_from_file(std::string filename) {
         } else if (linetype == "vt") {
             float x, y;
             line_stream >> x >> y;
-            obj_texture_coords.push_back({x, y});
+            obj_texture_coords.push_back({x, 1 - y});
         } else if (linetype == "usemtl") {
             std::string material_name;
             line_stream >> material_name;
@@ -501,7 +503,7 @@ Shape *ShapeGenerator::get_from_file(std::string filename) {
     ret->num_floats_per_vertex = NUM_FLOATS_PER_VERTEX;
 
     ret->vertices = (GLfloat *)malloc(ret->get_size_bytes());
-    ret->indices = (GLushort *)malloc(ret->get_indices_size_bytes());
+    ret->indices = (GLuint *)malloc(ret->get_indices_size_bytes());
     memcpy(ret->vertices, verts.data(), ret->get_size_bytes());
     memcpy(ret->indices, indices.data(), ret->get_indices_size_bytes());
 

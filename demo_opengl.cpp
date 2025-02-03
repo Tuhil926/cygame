@@ -1,5 +1,4 @@
 #include "cygame.h"
-#include "glad/glad.h"
 
 using namespace std;
 using namespace glm;
@@ -15,7 +14,9 @@ int main() {
     bool running = true;
 
     Shape *cube = ShapeGenerator::get_cube();
-    Shape *sphere = ShapeGenerator::get_sphere(200, 100);
+    // Shape *sphere = ShapeGenerator::get_sphere(200, 100);
+    Shape *sphere = ShapeGenerator::get_from_file("models/sphere.obj");
+    cout << sphere->vertex_count << endl;
     // Shape *sphere = ShapeGenerator::get_cube();
     Shape *plane = ShapeGenerator::get_from_file("models/plane.obj");
 
@@ -28,14 +29,21 @@ int main() {
 
     Camera camera("vertex_shader_demo.glslv", "fragment_shader_demo.glslf");
 
+    // This function sends the shapes to the GPU. This function needs to be
+    // called only once, and it has to be called before rendering any of the
+    // shapes
     renderer.send_shapes();
+
+    Image earth("images/2k_earth_daymap.jpg");
+    Image cat("images/sad_cat.png");
 
     Object cube_object(cube_gpu);
     Object cube_object_2(cube_gpu);
-    Object sphere_object(sphere_gpu);
+    Object sphere_object(sphere_gpu, earth);
     Object plane_object(plane_gpu);
     cube_object_2.position.z = -7;
     sphere_object.position.z = -7;
+    // sphere_object.rotate_x(glm::pi<float>());
     plane_object.position.x = 7;
     plane_object.scale.x = 7;
     plane_object.scale.y = 7;
@@ -51,8 +59,6 @@ int main() {
               &font, {0, 255, 255, 255});
     Button button1({50, 50, 100, 50}, "hello", &font, {150, 150, 60, 255},
                    {200, 200, 100, 255}, {255, 255, 150, 255}, NULL);
-
-    Image cat("images/sad_cat.png");
 
     while (running) {
         // you need to use this handle_event macro if you want to be able to use
@@ -91,6 +97,7 @@ int main() {
 
         camera.track_input(keys, mouse_state, 1.0 / 60.0);
         button1.update(mouse_state);
+        sphere_object.rotate_y(0.01);
 
         // drawing things
 

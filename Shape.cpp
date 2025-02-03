@@ -12,7 +12,7 @@ GLsizeiptr Shape::get_size_bytes() {
     return vertex_count * num_floats_per_vertex * sizeof(GLfloat);
 }
 GLsizeiptr Shape::get_indices_size_bytes() {
-    return index_count * sizeof(GLushort);
+    return index_count * sizeof(GLuint);
 }
 GLsizeiptr Shape::get_stride_bytes() {
     return num_floats_per_vertex * sizeof(GLfloat);

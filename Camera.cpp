@@ -402,7 +402,6 @@ void Camera::render_text(std::string text, float x, float y, glm::vec3 color,
             /**/ 0.0,     0.0,      1.0,     //
             /**/ 1.0,     0.0,               //
         };
-        // GLushort inds[] = {0, 1, 2, 2, 3, 0};
         ShapeOnGPU default_rect = get_default_rect();
         glBindTexture(GL_TEXTURE_2D, character.TextureID);
         send_data_to_GPU(default_rect, verts);

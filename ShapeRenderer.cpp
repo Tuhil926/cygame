@@ -45,7 +45,7 @@ void ShapeRenderer::send_shapes() {
         (GLfloat *)malloc(combined_shape->get_size_bytes());
     combined_shape->index_count = tot_offset_indices;
     combined_shape->indices =
-        (GLushort *)malloc(combined_shape->get_indices_size_bytes());
+        (GLuint *)malloc(combined_shape->get_indices_size_bytes());
 
     int tot_byte_offset_vertices = 0;
     int tot_num_indices = 0;
@@ -99,6 +99,7 @@ void ShapeRenderer::send_shapes() {
 void ShapeRenderer::render_shape(ShapeOnGPU shape_gpu) {
     // glDrawArrays(GL_TRIANGLES, shape_gpu.offset_vertices,
     //              shape_gpu.num_vertices);
-    glDrawElements(GL_TRIANGLES, shape_gpu.num_indices, GL_UNSIGNED_SHORT,
-                   (void *)(shape_gpu.offset_indices * sizeof(GLushort)));
+    // TODO: Change to GL_UNSIGNED_INT
+    glDrawElements(GL_TRIANGLES, shape_gpu.num_indices, GL_UNSIGNED_INT,
+                   (void *)(shape_gpu.offset_indices * sizeof(GLuint)));
 }

@@ -158,7 +158,7 @@ class Shape {
     GLuint vertex_count;
     GLfloat *vertices;
     GLuint index_count;
-    GLushort *indices;
+    GLuint *indices;
     GLuint num_floats_per_vertex;
     Shape();
     GLsizeiptr get_size_bytes();
@@ -234,6 +234,7 @@ class Image {
   public:
     unsigned int texture_id;
     int width, height, n;
+    Image();
     Image(std::string filename);
 };
 
@@ -304,7 +305,10 @@ class Object {
     glm::vec3 position;
     glm::mat4 rotation;
     glm::vec3 scale;
+    bool has_texture = 0;
+    Image image;
     Object(ShapeOnGPU shape_on_gpu);
+    Object(ShapeOnGPU shape_on_gpu, Image image);
     // glm::mat4 get_model_to_world_transform_matrix();
     glm::mat4 get_model_to_world_translation_matrix();
     glm::mat4 get_model_to_world_scale_matrix();

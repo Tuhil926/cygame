@@ -23,13 +23,8 @@ Button::Button(SDL_Rect rect, std::string text, Font *font, Color color,
                     this->text_color);
 }
 void Button::draw(Camera &camera) {
-    // TODO: change
-    // fill_rect(rect, screen, color);
     camera.draw_rect(rect, color);
     if (text.size())
-        //     draw_centered_text(screen, font, text,
-        //                        pos + Pos2D{width / 2, height / 2},
-        //                        text_color);
         this->text_obj.draw(camera);
 }
 // Button::Button() {}
