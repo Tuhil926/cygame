@@ -6,8 +6,18 @@
 - This is just meant to be a useful starting point to build your game upon, not a game engine. So I haven't make the most customisable buttons or text inputs or sliders, so it's up to you to change them to fit your game. The main advantage is that you don't have to build this from scratch, or search online for some implementation that may or may not work/fit your preference, or have to install some sort of ui library and learn how to use all it's extensive features.
 - Now I know probably no one except me will use this, so I mainly made this for myself. However, if there's something you are looking for that you want added to this, feel free to tell me by creating an issue, and I might add it. Or, you can add it and create a pull request, and if I like it, I'll accept it (I recommend making an issue first).
 
-# Screenshot of the scene in demo_opengl:
+# Demo of some of the features:
+
+- Video demo:
+<p align="center" width="100%">
+    <a href="https://www.youtube.com/watch?v=kOPNlr3eW3c">
+    <img width="25%" src="https://img.youtube.com/vi/kOPNlr3eW3c/0.jpg">
+    </a>
+</p>
+
+- Image:
 ![image](images/demo_picture_1.png)
+
 - as you can see here, I've implemented the ability to load models from an object file (which you can get by exporting a .obj file from blender).
 - The models have directional ambient lighting, as well as specular lighting.
 - I've also implemented the ability to render images
