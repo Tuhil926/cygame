@@ -77,11 +77,24 @@ Camera::Camera(std::string vertex_shader_src_file_name,
         delete[] buffer;
     }
 
-    GLuint programObject = glCreateProgram();
+    programObject = glCreateProgram();
 
     glAttachShader(programObject, vertexShader);
     glAttachShader(programObject, fragmentShader);
     glLinkProgram(programObject);
+
+    GLint linkStatus;
+    glGetProgramiv(programObject, GL_LINK_STATUS, &linkStatus);
+    if (linkStatus != GL_TRUE) {
+        GLint infoLength;
+        glGetProgramiv(programObject, GL_INFO_LOG_LENGTH, &infoLength);
+        GLchar *buffer = new GLchar[infoLength];
+
+        GLsizei bufferSize;
+        glGetProgramInfoLog(programObject, infoLength, &bufferSize, buffer);
+        std::cerr << buffer << std::endl;
+        delete[] buffer;
+    }
     glValidateProgram(programObject);
 
     glEnable(GL_DEPTH_TEST);

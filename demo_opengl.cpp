@@ -4,7 +4,13 @@ using namespace std;
 using namespace glm;
 
 // this is just a demo to show how to use cygame.
-
+// void checkGLError(const char *location) {
+//     GLenum err;
+//     while ((err = glGetError()) != GL_NO_ERROR) {
+//         std::cerr << "OpenGL error at " << location << ": " << err <<
+//         std::endl;
+//     }
+// }
 // this is the callback function that the button calls.
 int main() {
     // initialises sdl.
@@ -28,10 +34,32 @@ int main() {
     // creating the shader program
 
     Camera camera("vertex_shader_demo.glslv", "fragment_shader_demo.glslf");
+    // std::cout << "Shader program ID: " << camera.programObject << std::endl;
+    // if (!glIsProgram(camera.programObject)) {
+    //     std::cerr << "Error: shaderProgram is not a valid OpenGL program!"
+    //               << std::endl;
+    // }
+    //
+    // GLint uniformCount;
+    // checkGLError("Before glGetProgramiv");
+    // glGetProgramiv(camera.programObject, GL_ACTIVE_UNIFORMS, &uniformCount);
+    // checkGLError("After glGetProgramiv");
+    // std::cout << "Active Uniforms: " << uniformCount << std::endl;
+    //
+    // for (GLint i = 0; i < uniformCount && i < 50; i++) {
+    //     char name[256];
+    //     GLsizei length;
+    //     GLint size;
+    //     GLenum type;
+    //     glGetActiveUniform(camera.programObject, i, sizeof(name), &length,
+    //                        &size, &type, name);
+    //     std::cout << "Uniform " << i << ": " << name << std::endl;
+    // }
 
     // This function sends the shapes to the GPU. This function needs to be
     // called only once, and it has to be called before rendering any of the
     // shapes
+
     renderer.send_shapes();
 
     Image earth("images/2k_earth_daymap.jpg");
