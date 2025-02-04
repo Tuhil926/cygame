@@ -29,10 +29,31 @@ vec3 b(vec3 p, float phase, float angle){
     return vec3(clamp(a1(p, phase), 0., 1.) + clamp(tan((angle - phase)), 0., 1.), a1(p, phase + 0.3), a1(p, phase + 0.6));
     // return vec3(tan(angle - phase), 0., 0.);
 }
+vec4 c1(vec3 p, float phase){
+    float angle = atan(p.y/p.x);
+    return clamp(vec4(b(p, phase, angle), 1.)/(norm(p*4.)), 0., 1.);
+}
 
 vec4 c(vec3 p, float phase){
     float angle = atan(p.y/p.x);
-    return clamp(vec4(b(p, phase, angle), 1.)/(norm(p*4.)), 0., 1.);
+    vec3 p1 = p*(1 + sin(angle*100)/50.);
+    vec3 b_ret = vec3(a1(p1, phase), a1(p1, phase + 0.1), a1(p, phase + 0.2));
+    float val = clamp(.1/tan(phase - angle), 0., 1.);
+    return clamp(vec4(b_ret, 1.)/(norm(p*4.)) + vec4(val, val*val/2., val*val*val/2., 1.), 0., 1.);
+}
+vec4 c2(vec3 p, float phase){
+    float angle = -atan(p.y/p.x);
+    vec3 p1 = p*(1 + sin(angle*100)/50.);
+    vec3 b_ret = vec3(a1(p1, phase), a1(p1, phase + 0.1), a1(p, phase + 0.2));
+    float val = clamp(.1/tan(angle - phase), 0., 1.);
+    return clamp(vec4(b_ret, 1.)/(norm(p*4.)) + vec4(val, val*val/2., val*val*val/2., 1.), 0., 1.);
+}
+vec4 c3(vec3 p, float phase){
+    float angle = atan(p.y/p.x);
+    vec3 p1 = p*(1 + sin(angle*100)/50.);
+    vec3 b_ret = vec3(a1(p1, phase), a1(p1, phase + 0.1), a1(p, phase + 0.2));
+    float val = clamp(.1/tan(angle - phase), 0., 1.);
+    return clamp(vec4(b_ret, 1.)/(norm(p*4.)) + vec4(val, val*val/2., val*val*val/2., 1.), 0., 1.);
 }
 
 void main() {
@@ -41,9 +62,9 @@ void main() {
     // color = vec4(b(pos, -timeSeconds, angle), 1.);
     // color = vec4(b((pos + vec3(0.5, 0.5, 0.))/2., -timeSeconds*2., angle), 1.);
     color = c(pos , timeSeconds + 50.);
-    color += c(pos + vec3(1., 1., 0.), -timeSeconds);
-    color += c(pos - vec3(1., 1., 0.), -timeSeconds);
-    color += c(pos + vec3(-1., 1., 0.), -timeSeconds);
-    color += c(pos - vec3(-1., 1., 0.), -timeSeconds);
+    color += c2(pos + vec3(1., 1., 0.), -timeSeconds);
+    color += c2(pos - vec3(1., 1., 0.), -timeSeconds);
+    color += c3(pos + vec3(-1., 1., 0.), -timeSeconds);
+    color += c3(pos - vec3(-1., 1., 0.), -timeSeconds);
 
 }

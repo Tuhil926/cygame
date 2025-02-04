@@ -49,7 +49,7 @@ int main() {
         clear_screen({0, 0, 0, 0});
 
         glUniform1f(time_uniform, time);
-        camera.draw_rect({0, 0, 700, 700}, {255, 255, 255, 255});
+        camera.draw_rect({0, 0, (int)get_global_width(), (int)get_global_height()}, {255, 255, 255, 255});
 
         // finally, you need to call draw_screen to show the stuff onto the
         // screen.
