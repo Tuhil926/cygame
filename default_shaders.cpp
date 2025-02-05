@@ -1,4 +1,5 @@
-char default_vertex_shader[] =
+#include <string>
+std::string default_vertex_shader =
     "#version 410 core\n"
     "layout(location = 0) in vec3 position;\n"
     "layout(location = 1) in vec3 color;\n"
@@ -24,7 +25,7 @@ char default_vertex_shader[] =
     "   textureCoord = texture_coord;\n"
     "// theNormal = vec3(1, 1, 1);\n"
     "}";
-char default_fragment_shader[] =
+std::string default_fragment_shader =
     "#version 410 core\n"
     "in vec3 theColor;\n"
     "in vec3 theNormal;\n"
@@ -71,3 +72,11 @@ char default_fragment_shader[] =
     "    // color = clamp(specColor, 0.0, 1.0);\n"
     "    // color = vec4(theColor, 1.0);\n"
     "}\n";
+
+void set_default_vertex_shader(std::string vertex_shader_src) {
+    default_vertex_shader = vertex_shader_src;
+}
+
+void set_default_fragment_shader(std::string fragment_shader_src) {
+    default_fragment_shader = fragment_shader_src;
+}

@@ -237,6 +237,9 @@ class Image {
     Image();
     Image(std::string filename);
 };
+void set_default_vertex_shader(std::string vertex_shader_src);
+
+void set_default_fragment_shader(std::string fragment_shader_src);
 
 class Camera {
   public:

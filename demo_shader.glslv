@@ -19,8 +19,7 @@ void main()
     gl_Position = newPosition;
     theColor = color;
     theNormal = vec3(rotationMatrix * vec4(normal, 0.0));
-    pos = vec3(modelToWorldMatrix*vec4(position, 1.0))*normal.z;
-    pos += vec3(gl_Position.x, gl_Position.y, gl_Position.z);
+    pos = vec3(gl_Position.x, gl_Position.y, gl_Position.z);
     textureCoord = texture_coord;
     // theNormal = vec3(1, 1, 1);
 }

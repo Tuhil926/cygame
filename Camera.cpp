@@ -9,22 +9,20 @@
 #include <iterator>
 #include <string>
 
-Camera::Camera() {
+Camera::Camera() : Camera("", "") {}
+
+Camera::Camera(std::string vertex_shader_src_file_name,
+               std::string fragment_shader_src_file_name) {
     position = glm::vec3(0, 0, 0);
     up = glm::vec3(0, 1, 0);
     front = glm::vec3(0, 0, -1);
     fov = glm::pi<float>() / 3;
     right = glm::cross(front, up);
-}
-
-Camera::Camera(std::string vertex_shader_src_file_name,
-               std::string fragment_shader_src_file_name)
-    : Camera() {
     std::string vertexShaderSrc;
     std::string fragmentShaderSrc;
     std::ifstream vertexShaderFile(vertex_shader_src_file_name);
     if (!vertexShaderFile.is_open()) {
-        std::cerr << "Error: Unable to open vertex shader file, switching to "
+        std::cerr << "Cygame: Unable to open vertex shader file, switching to "
                      "default vertex shader"
                   << std::endl;
         vertexShaderSrc = default_vertex_shader;
@@ -34,9 +32,10 @@ Camera::Camera(std::string vertex_shader_src_file_name,
                         std::istreambuf_iterator<char>());
     std::ifstream fragmentShaderFile(fragment_shader_src_file_name);
     if (!fragmentShaderFile.is_open()) {
-        std::cerr << "Error: Unable to open fragment shader file, switching to "
-                     "default fragment shader"
-                  << std::endl;
+        std::cerr
+            << "Cygame: Unable to open fragment shader file, switching to "
+               "default fragment shader"
+            << std::endl;
         fragmentShaderSrc = default_fragment_shader;
     } else
         fragmentShaderSrc =
