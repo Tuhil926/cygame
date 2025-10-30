@@ -17,6 +17,9 @@ run2d: build/demo
 run_shader: build/demo_shader
 	./build/demo_shader
 
+run_graphs: build/demo_graphs
+	./build/demo_graphs
+
 build/demo: demo.cpp include/cygame.h $(CYGAME_SRC_FILES)
 	mkdir -p build
 	g++ demo.cpp $(CYGAME_SRC_FILES) glad/glad.c $(INCLUDES) $(LINKER_FLAGS) -o build/demo
@@ -24,6 +27,10 @@ build/demo: demo.cpp include/cygame.h $(CYGAME_SRC_FILES)
 build/demo_opengl: demo_opengl.cpp include/cygame.h $(CYGAME_SRC_FILES)
 	mkdir -p build
 	g++ demo_opengl.cpp $(CYGAME_SRC_FILES) glad/glad.c $(INCLUDES) $(LINKER_FLAGS) -o build/demo_opengl
+
+build/demo_graphs: demo_graphs.cpp include/cygame.h $(CYGAME_SRC_FILES)
+	mkdir -p build
+	g++ demo_graphs.cpp $(CYGAME_SRC_FILES) glad/glad.c $(INCLUDES) $(LINKER_FLAGS) -o build/demo_graphs
 
 build/demo_shader: demo_shader.cpp include/cygame.h $(CYGAME_SRC_FILES)
 	mkdir -p build

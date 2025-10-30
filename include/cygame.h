@@ -1,5 +1,6 @@
 #ifndef CYGAME_H
 #define CYGAME_H
+#include "SDL_events.h"
 #include "SDL_scancode.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_float4x4.hpp"
@@ -85,6 +86,9 @@
 #define K_down SDL_SCANCODE_DOWN
 #define K_left SDL_SCANCODE_LEFT
 #define K_right SDL_SCANCODE_RIGHT
+
+#define MOUSE_BUTTON_DOWN SDL_MOUSEBUTTONDOWN
+#define MOUSE_BUTTON_UP SDL_MOUSEBUTTONUP
 
 #define Mouse_left SDL_BUTTON_LMASK
 #define Mouse_right SDL_BUTTON_RMASK
