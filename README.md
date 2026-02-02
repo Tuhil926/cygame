@@ -28,6 +28,7 @@
 <!-- - `sudo apt-get install libsdl2-2.0-0 libsdl2-dev` -->
 - Download the freetype source code from [here](https://download.savannah.gnu.org/releases/freetype/freetype-2.13.3.tar.gz)
 - unzip it however you want. `tar -xf freetype-2.13.3.tar.xz` works.
+- You might have to run `sudo apt install automake libtool autoconf` before this as these are dependencies for freetype.
 - then cd into the directory and run the following:
 - `sh autogen.sh`
 - `./configure`
@@ -39,3 +40,5 @@
 
 - Run `make run` to compile and run the 3d demo.
 - Run `make run2d` to compile and run the 2d demo.
+- Run `make run_shader` to compile and run the shader demo.
+- Run `make run_graphs` to compile and run the graphs demo.
